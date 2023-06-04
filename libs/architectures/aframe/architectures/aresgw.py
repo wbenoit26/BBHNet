@@ -44,7 +44,7 @@ class DAIN_Layer(nn.Module):
         # Step 1:
         avg = torch.mean(x, 2)
         adaptive_avg = self.mean_layer(avg)
-        adaptive_avg = adaptive_avg.resize(
+        adaptive_avg = adaptive_avg.reshape(
             adaptive_avg.size(0), adaptive_avg.size(1), 1
         )
         x = x - adaptive_avg
@@ -55,7 +55,7 @@ class DAIN_Layer(nn.Module):
         adaptive_std = self.scaling_layer(std)
         adaptive_std[adaptive_std <= self.eps] = 1
 
-        adaptive_std = adaptive_std.resize(
+        adaptive_std = adaptive_std.reshape(
             adaptive_std.size(0), adaptive_std.size(1), 1
         )
         x = x / adaptive_std
@@ -63,7 +63,7 @@ class DAIN_Layer(nn.Module):
         # Step 3:
         avg = torch.mean(x, 2)
         gate = torch.sigmoid(self.gating_layer(avg))
-        gate = gate.resize(gate.size(0), gate.size(1), 1)
+        gate = gate.reshape(gate.size(0), gate.size(1), 1)
         x = x * gate
         return x
 
@@ -84,7 +84,8 @@ class ResBlock(nn.Module):
                 out_channels,
                 kernel_size=3,
                 stride=1,
-                padding="same",
+                # was "same", is now effectively dilation * kernel_size // 2
+                padding=1,
             ),
             nn.BatchNorm1d(out_channels),
             nn.ReLU(),
@@ -190,6 +191,7 @@ class ResNet54Double(nn.Module):
 
     def forward(self, x):
         x = self.feature_extractor(x)
+        # Pretty sure this is valid for getting the values we want
         return self.cls_head(x).squeeze(2)[:, 0].unsqueeze(1)
 
 

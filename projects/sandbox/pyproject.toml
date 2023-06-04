@@ -27,6 +27,7 @@ channel = "DCS-CALIB_STRAIN_CLEAN_C01"
 frame_type = "HOFT_C01"
 state_flag = "DCS-ANALYSIS_READY_C01:1"
 resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
+aresgw = {}
 repository_directory = "${BASE_DIR}/model_repo/" 
 force_generation = false
 Tb = 5184000  # 60 days of background
@@ -138,7 +139,7 @@ valid_frac = "${base.valid_frac}"
 valid_stride = 0.5
 max_fpr = 1e-3
 valid_livetime = 57600  # 16 hours of background
-early_stop = 25
+early_stop = 200
 checkpoint_every = 3
 
 # misc args
@@ -148,6 +149,7 @@ use_amp = false
 
 # arch parameters
 commands.resnet = "${base.resnet}"
+commands.aresgw = "${base.aresgw}"
 
 [tool.typeo.scripts.export-model]
 # paths

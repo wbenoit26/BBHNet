@@ -338,7 +338,7 @@ def main(
 
     # fit the whitening module to the background then
     # move eveyrthing to the desired device
-    preprocessor.whitener.fit(kernel_length, *background)
+    preprocessor.whitener.fit(kernel_length, *background, highpass=highpass)
     preprocessor.whitener.to(device)
 
     return train_dataset, validator, preprocessor

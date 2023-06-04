@@ -3,11 +3,13 @@ from collections.abc import Callable
 
 import torch
 
+from aframe.architectures.aresgw import AresGW
 from aframe.architectures.resnet import BottleneckResNet, ResNet
 
 architectures = {
     "resnet": ResNet,
     "bottleneck": BottleneckResNet,
+    "aresgw": AresGW,
 }
 
 

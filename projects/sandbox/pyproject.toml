@@ -6,7 +6,7 @@ steps = [
     "train:train:resnet",
     "export:export-model:resnet",
     "infer:deploy-infer",
-    "vizapp:vizapp"
+    "plots:sensitive-volume"
 ]
 
 [tool.typeo.base]
@@ -32,7 +32,7 @@ resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
 repository_directory = "${BASE_DIR}/model_repo/" 
 force_generation = false
 Tb = 31536000  # 1 year of background
-inference_sampling_rate = 2
+inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
@@ -151,6 +151,7 @@ checkpoint_every = 3
 device = "cuda"
 profile = false
 use_amp = true
+seed = "${base.global_seed}"
 
 # arch parameters
 commands.resnet = "${base.resnet}"
@@ -207,7 +208,7 @@ prior = "${base.testing_prior}"
 minimum_frequency = "${base.minimum_frequency}"
 reference_frequency = "${base.reference_frequency}"
 highpass = "${base.highpass}"
-spacing = 48
+spacing = 16
 buffer = 16
 snr_threshold = "${base.hopeless_snr_thresh}" 
 waveform_duration = "${base.waveform_duration}"
@@ -234,7 +235,7 @@ sequence_id = 1001
 # timeslide args
 Tb = "${base.Tb}"
 shifts = [0, 1]
-throughput = 640
+throughput = 1000
 
 # data args
 sample_rate = "${base.sample_rate}"
@@ -252,19 +253,12 @@ psd_length = "${base.inference_psd_length}"
 # misc
 verbose = "${base.verbose}"
 
-[tool.typeo.scripts.vizapp]
-source_prior = "${base.testing_prior}"
-timeslides_results_dir = "${base.basedir}/timeslide_injections/"
-timeslides_strain_dir = "${base.datadir}/timeslide_injections"
-ifos = "${base.ifos}"
-start = "${base.train_stop}"
-stop = "${base.test_stop}"
-veto_definer_file = "./vetoes/H1L1-HOFT_C01_O3_CBC.xml"
-gate_paths = {"H1" = "./vetoes/H1-O3_GATES_1238166018-31197600.txt" , "L1" = "./vetoes/L1-O3_GATES_1238166018-31197600.txt"}
-train_data_dir = "${base.datadir}"
-sample_rate = "${base.sample_rate}"
-fduration = "${base.fduration}"
-valid_frac = "${base.valid_frac}"
-logdir = "${base.basedir}"
-cosmology = "${base.cosmology}"
-verbose = true
+[tool.typeo.scripts.sensitive-volume]
+background_file = "${base.basedir}/infer/background.h5"
+foreground_file = "${base.basedir}/infer/foreground.h5"
+rejected_params = "${base.datadir}/test/rejected-parameters.h5"
+output_fname = "${base.basedir}/infer/sensitive-volume.html"
+log_file = "${base.basedir}/log/sensitive_volume.log"
+max_far = 1000
+sigma = 0.1
+verbose = "${base.verbose}"

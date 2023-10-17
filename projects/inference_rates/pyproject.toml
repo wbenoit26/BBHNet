@@ -1,6 +1,6 @@
 [tool.pinto]
 steps = [
-    "multi_rate_export:export_models:resnet",
+    "multi_rate_export:export-models:resnet",
     "multi_rate_infer:launch-inference",
 ]
 

@@ -26,7 +26,7 @@ def get_prob(prior, ledger):
 
 @scriptify
 def main(
-    infer_dir: Path,
+    basedir: Path,
     inference_sampling_rates: List[float],
     rejected_params: Path,
     output_fname: Path,
@@ -41,8 +41,8 @@ def main(
 
     sensitive_volumes, errs = [], []
     for rate in inference_sampling_rates:
-        background_file = infer_dir / "background.h5"
-        foreground_file = infer_dir / "foreground.h5"
+        background_file = basedir / f"{rate}Hz" / "background.h5"
+        foreground_file = basedir / f"{rate}Hz" / "foreground.h5"
         background = TimeSlideEventSet.read(background_file)
         foreground = RecoveredInjectionSet.read(foreground_file)
         rejected_params = InjectionParameterSet.read(rejected_params)

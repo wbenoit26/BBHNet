@@ -2,6 +2,7 @@
 steps = [
     "multi_rate_export:export-models:resnet",
     "multi_rate_infer:launch-inference",
+    "multi_rate_plots:sensitive-volumes",
 ]
 
 [tool.typeo.base]
@@ -91,4 +92,14 @@ fduration = "${base.fduration}"
 psd_length = "${base.inference_psd_length}"
 
 # misc
+verbose = "${base.verbose}"
+
+[tool.typeo.scripts.sensitive-volumes]
+basedir = "${base.basedir}"
+inference_sampling_rates = "${base.inference_sampling_rates}"
+rejected_params = "${base.datadir}/test/rejected-parameters.h5"
+output_fname = "${base.basedir}/infer/sensitive-volume.html"
+log_file = "${base.basedir}/log/sensitive_volume.log"
+max_far = 1000
+sigma = 0.1
 verbose = "${base.verbose}"

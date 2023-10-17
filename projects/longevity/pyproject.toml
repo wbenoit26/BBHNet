@@ -59,13 +59,13 @@ verbose = true
 
 [tool.typeo.scripts.launch-training]
 basedir = "${base.basedir}"
-gpus = [1, 2, 3, 4, 5, 6, 7, 8]
+gpus = [0, 1, 2, 3, 4, 5, 6, 7]
 
 [tool.typeo.scripts.train]
 
 # optimization args
 batch_size = 384
-max_epochs = 2
+max_epochs = 200
 max_lr = 0.000585
 lr_ramp_epochs = 1
 weight_decay = 0.0

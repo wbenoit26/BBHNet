@@ -28,7 +28,7 @@ def get_prob(prior, ledger):
 def main(
     basedir: Path,
     inference_sampling_rates: List[float],
-    rejected_params: Path,
+    rejected_param_file: Path,
     output_fname: Path,
     log_file: Optional[Path] = None,
     max_far: float = 1000,
@@ -39,13 +39,13 @@ def main(
 
     logging.info("Reading in inference outputs")
 
-    sensitive_volumes, errs = [], []
+    fars, sensitive_volumes, errs = [], [], []
     for rate in inference_sampling_rates:
-        background_file = basedir / f"{rate}Hz" / "background.h5"
-        foreground_file = basedir / f"{rate}Hz" / "foreground.h5"
+        background_file = basedir / f"{rate}Hz" / "infer" / "background.h5"
+        foreground_file = basedir / f"{rate}Hz" / "infer" / "foreground.h5"
         background = TimeSlideEventSet.read(background_file)
         foreground = RecoveredInjectionSet.read(foreground_file)
-        rejected_params = InjectionParameterSet.read(rejected_params)
+        rejected_params = InjectionParameterSet.read(rejected_param_file)
 
         for i in range(2):
             mass = f"mass_{i + 1}"
@@ -106,13 +106,41 @@ def main(
         )
         y *= v0
         err *= v0
+
+        fars.append(x)
         sensitive_volumes.append(y)
         errs.append(err)
 
     plots = utils.make_grid(mass_combos)
-    for i, (p, color) in enumerate(zip(plots, utils.palette)):
-        for y, err in zip(sensitive_volumes, errs):
-            p.line(x, y[i], line_width=1.5, line_color=color)
+    kwargs = {}
+    for i, p in enumerate(plots):
+        for x, y, err, color, rate in zip(
+            fars,
+            sensitive_volumes,
+            errs,
+            utils.palette,
+            inference_sampling_rates,
+        ):
+            if i == 1:
+                kwargs["legend_label"] = f"{int(rate)} Hz"
+                p.line(x, y[i], line_width=1.5, line_color=color, **kwargs)
+                # style legend position
+                p.legend.location = "top_left"
+                p.legend.margin = 4
+                p.legend.padding = 2
+
+                # style individual glyphs
+                p.legend.glyph_height = 6
+                p.legend.label_text_font_size = "8pt"
+                p.legend.label_height = 8
+
+                # style title
+                p.legend.title = "Inference Rate Comparison"
+                p.legend.title_text_font_size = "9pt"
+                p.legend.title_text_font_style = "bold"
+            else:
+                p.line(x, y[i], line_width=1.5, line_color=color)
+
             utils.plot_err_bands(
                 p,
                 x,

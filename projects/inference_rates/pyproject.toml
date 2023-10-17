@@ -97,9 +97,9 @@ verbose = "${base.verbose}"
 [tool.typeo.scripts.sensitive-volumes]
 basedir = "${base.basedir}"
 inference_sampling_rates = "${base.inference_sampling_rates}"
-rejected_params = "${base.datadir}/test/rejected-parameters.h5"
-output_fname = "${base.basedir}/infer/sensitive-volume.html"
-log_file = "${base.basedir}/log/sensitive_volume.log"
+rejected_param_file = "${base.datadir}/test/rejected-parameters.h5"
+output_fname = "${base.basedir}/sensitive-volumes.html"
+log_file = "${base.basedir}/log/sensitive_volumes.log"
 max_far = 1000
 sigma = 0.1
 verbose = "${base.verbose}"

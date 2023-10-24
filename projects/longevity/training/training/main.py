@@ -20,10 +20,7 @@ def read_config(path):
 
 
 @scriptify
-def launch_train(
-    interval: Path,
-    gpu: int,
-):
+def launch_train(interval: Path, gpu: int, seed: int):
 
     # construct directories / dataset paths for this interval
     retrain_dir = interval / "retrained"
@@ -42,6 +39,7 @@ def launch_train(
     train_config["waveform_dataset"] = str(waveform_dataset)
     train_config["logdir"] = str(retrain_dir / "log")
     train_config["outdir"] = str(retrain_dir / "training")
+    train_config["seed"] = seed
 
     # write the config to the run's directory
     config_path = retrain_dir / "pyproject.toml"
@@ -74,15 +72,19 @@ def launch_train(
 
 
 @scriptify
-def main(basedir: Path, gpus: List[int]):
+def main(basedir: Path, gpus: List[int], seed: int):
     configure_logging(basedir / "train.log", verbose=True)
     # for each interval, train a model
-    intervals = [x for x in basedir.iterdir() if x.is_dir()]
+    intervals = [
+        x for x in basedir.iterdir() if x.is_dir() and x.name != "condor"
+    ]
     futures = []
     with ThreadPoolExecutor(len(gpus)) as ex:
         for gpu, interval in zip(gpus, intervals):
+            if interval.name == "08-03-2019_08-10-2019":
+                continue
             logging.info(f"Training for interval {interval} on GPU {gpu}")
-            future = ex.submit(launch_train, interval, gpu)
+            future = ex.submit(launch_train, interval, gpu, seed)
             futures.append(future)
 
     for f in as_completed(futures):

@@ -1,15 +1,16 @@
 [tool.pinto]
 steps = [
     #"data_gen:launch-datagen",
-    #"training:launch-training",
+    "training:launch-training",
     #"exporting:launch-export:resnet",
-    "inference:launch-inference",
+    #"inference:launch-inference",
 ]
 
 
 [tool.typeo.base]
 Tb = 5184000  # 60 days of background
 shifts = [0, 1]
+global_seed = 42
 
 inference_psd_length = 64
 training_psd_length = 8
@@ -26,9 +27,9 @@ resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
 
 [tool.typeo.scripts.launch-datagen]
 basedir = "${base.basedir}"
-
+seed = "${base.global_seed}"
 test_stop = 1244035783
-intervals = [1, 2, 4, 12, 24, 32] # number of weeks
+intervals = [1, 2, 4, 8, 12, 24, 32, 40] # number of weeks
 channel = "OPEN"
 sample_rate = "${base.sample_rate}"
 ifos = "${base.ifos}"
@@ -60,6 +61,7 @@ verbose = true
 [tool.typeo.scripts.launch-training]
 basedir = "${base.basedir}"
 gpus = [0, 1, 2, 3, 4, 5, 6, 7]
+seed = "${base.global_seed}"
 
 [tool.typeo.scripts.train]
 

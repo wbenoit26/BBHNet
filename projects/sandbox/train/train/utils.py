@@ -84,7 +84,7 @@ def get_background(fnames: Iterable[Path]):
                 hoft = f[ifo][:]
                 background.append(hoft)
         data.append(np.stack(background))
-    return np.stack(data)
+    return data
 
 
 def get_waveforms(

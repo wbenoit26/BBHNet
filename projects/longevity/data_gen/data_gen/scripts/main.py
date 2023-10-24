@@ -2,7 +2,7 @@ import inspect
 import logging
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import numpy as np
 from datagen.scripts.background import deploy as deploy_background
@@ -97,13 +97,14 @@ def main(
     psd_length: float,
     # waveform generation args
     num_signals: int,
-    # condor args
+    # condor / misc args
     accounting_group: str,
     accounting_group_user: str,
     request_memory: int = 32768,
     request_disk: int = 1024,
     verbose: bool = False,
     force_generation: bool = False,
+    seed: Optional[int] = None,
 ):
 
     configure_logging(basedir / "datagen.log", verbose=verbose)
@@ -175,6 +176,9 @@ def main(
                 accounting_group,
                 6000,
                 1024,
+                force_generation,
+                verbose,
+                seed,
             ]
             future = executor.submit(deploy_timeslides, *args)
             futures.append(future)
@@ -195,8 +199,9 @@ def main(
                 sample_rate,
                 waveform_duration,
                 waveform_approximant,
-                True,
+                force_generation,
                 verbose,
+                seed,
             ]
             future = executor.submit(generate_waveforms, *args)
             futures.append(future)

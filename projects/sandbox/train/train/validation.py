@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 import h5py
 import numpy as np
@@ -213,7 +213,7 @@ class Validator:
     """
 
     tracker: LocalTracker
-    background: torch.Tensor
+    background: List[torch.Tensor]
     waveforms: torch.Tensor
     psd_estimator: Callable
     whitener: Callable
@@ -235,12 +235,13 @@ class Validator:
 
     def __post_init__(self):
         self.auroc = BinaryAUROC(max_fpr=self.max_fpr)
-        self.num_segments = self.background.shape[0]
+        self.num_segments = len(self.background)
         self.durations = [
             background.shape[-1] / self.sample_rate
             for background in self.background
         ]
-        self.num_channels = self.background.shape[1]
+        # all background segments have the same number of channels
+        self.num_channels = self.background[0].shape[0]
         self.kernel_size = int(self.kernel_length * self.sample_rate)
         self.stride_size = int(self.stride * self.sample_rate)
         self.pool_size = int(self.pool_length / self.stride)

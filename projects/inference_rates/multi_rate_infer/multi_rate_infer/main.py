@@ -11,7 +11,7 @@ from aframe.logging import configure_logging
 
 @scriptify
 def main(
-    model_repo_dir: str,
+    model_repo_dir: Path,
     base_dir: Path,
     data_dir: Path,
     log_dir: Path,

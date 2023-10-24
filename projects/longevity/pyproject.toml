@@ -1,9 +1,9 @@
 [tool.pinto]
 steps = [
     "data_gen:launch-datagen",
-    #"training:launch-training",
-    #"exporting:launch-export:resnet",
-    #"inference:launch-inference",
+    "training:launch-training",
+    "exporting:launch-export:resnet",
+    "inference:launch-inference",
 ]
 
 

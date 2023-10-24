@@ -6,7 +6,9 @@ steps = [
     "train:train:resnet",
     "export:export-model:resnet",
     "infer:deploy-infer",
-    "plots:sensitive-volume"
+    "plots:sensitive-volume",
+    "plots:1D-param-hist",
+    "plots:2D-param-hist"
 ]
 
 [tool.typeo.base]
@@ -31,7 +33,7 @@ state_flag = "DATA" # open data segments
 resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
 repository_directory = "${BASE_DIR}/model_repo/" 
 force_generation = false
-Tb = 5184000 #31536000  # 1 year of background
+Tb = 31536000  # 1 year of background
 inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64
@@ -257,8 +259,22 @@ verbose = "${base.verbose}"
 background_file = "${base.basedir}/infer/background.h5"
 foreground_file = "${base.basedir}/infer/foreground.h5"
 rejected_params = "${base.datadir}/test/rejected-parameters.h5"
-output_fname = "${base.basedir}/infer/sensitive-volume.html"
+output_dir = "${base.basedir}/infer/"
 log_file = "${base.basedir}/log/sensitive_volume.log"
 max_far = 1000
 sigma = 0.1
+verbose = "${base.verbose}"
+
+[tool.typeo.scripts.1D_param_hist]
+foreground_file = "${base.basedir}/infer/foreground.h5"
+rejected_params = "${base.basedir}/test/rejected-parameters.h5"
+output_fname = "${base.basedir}/infer/1D_param_hist.html"
+log_file = "${base.basedir}/log/1D_param_hist.log"
+verbose = "${base.verbose}"
+
+[tool.typeo.scripts.2D_param_hist]
+foreground_file = "${base.basedir}/infer/foreground.h5"
+rejected_params = "${base.basedir}/test/rejected-parameters.h5"
+output_fname = "${base.basedir}/infer/2D_param_hist.html"
+log_file = "${base.basedir}/log/2D_param_hist.log"
 verbose = "${base.verbose}"

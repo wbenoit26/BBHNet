@@ -5,7 +5,7 @@ from typing import Optional
 import h5py
 import numpy as np
 from astropy.cosmology import Planck15 as cosmology
-from bokeh.io import save
+from bokeh.io import export_svg, save
 from bokeh.layouts import gridplot
 from plots import compute, utils
 from plots.gwtc3 import catalog_results
@@ -214,6 +214,7 @@ def main(
 
     grid = gridplot(plots, toolbar_location="right", ncols=2)
     save(grid, filename=output_dir / "sensitive_volume.html")
+    export_svg(grid, filename=output_dir / "sensitive_volume.svg")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from typing import List
 
 import h5py
 import numpy as np
+from bokeh.io import export_svg
 from bokeh.models import Label, Legend, LegendItem, Span
 from bokeh.palettes import RdYlBu4 as palette
 from bokeh.plotting import figure, save
@@ -31,7 +32,7 @@ def load_sv(path: Path, combo: str):
     return sv, fars
 
 
-def calc_sd_over_time(
+def calc_sv_over_time(
     intervals: List[Path], name: str, mass_combo: str, fars: np.ndarray
 ):
     data = []
@@ -60,7 +61,7 @@ def main(
     )
 
     # load in results for intervals
-    original = calc_sd_over_time(intervals, "original", mass_combo, fars)
+    original = calc_sv_over_time(intervals, "original", mass_combo, fars)
 
     # load in results for original model
     weeks.insert(0, 0)
@@ -70,7 +71,7 @@ def main(
     original = np.array(original)
 
     p = get_figure(
-        title="Sensitive Distance Over Time for 35/35 Lognormal",
+        title=f"Sensitive Distance Over Time for {mass_combo} Lognormal",
         x_axis_label="Weeks After Original Test Period",
         y_axis_label="Sensitive Distance (Mpc)",
         tools="save",
@@ -104,7 +105,9 @@ def main(
 
     legend = Legend(items=legends, click_policy="mute")
     p.add_layout(legend, "right")
-    save(p, filename="sensitive-distance-over-time.html")
+
+    save(p, filename="sensitive-volume-over-time.html")
+    export_svg(p, filename="sensitive-volume-over-time.svg")
 
 
 if __name__ == "__main__":

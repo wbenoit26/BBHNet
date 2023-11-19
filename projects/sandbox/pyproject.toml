@@ -23,9 +23,9 @@ ifos = ['H1', 'L1']
 hopeless_snr_thresh = 4
 global_seed = 42
 
-train_start = 1240579783
-train_stop = 1241443783  # 10 day train window
-test_stop = 1244035783 # 30 day test window
+train_start = 1127592817
+train_stop = 1127692817  # 10 day train window
+test_stop = 1130284817 # 30 day test window
 
 channel = "OPEN"
 frame_type = "HOFT_C01"
@@ -218,7 +218,7 @@ waveform_approximant = "${base.waveform_approximant}"
 
 [tool.typeo.scripts.deploy-infer]
 # paths
-model_repo_dir = "${base.repository_directory}"
+model_repo_dir = "/home/william.benoit/aframe/methods-paper-main-run/model_repo"
 data_dir = "${base.datadir}/test/background"
 injection_set_file = "${base.datadir}/test/waveforms.h5"
 output_dir = "${base.basedir}/infer"

@@ -4,10 +4,10 @@ from typing import Callable, List, Optional
 
 import numpy as np
 import torch
+from gwpy.timeseries import TimeSeries, TimeSeriesDict
 from online_deployment.buffer import DataBuffer
 from online_deployment.dataloading import data_iterator
 from online_deployment.trigger import Searcher, Trigger
-from gwpy.timeseries import TimeSeries, TimeSeriesDict
 
 from aframe.architectures import BatchWhitener, architecturize
 from aframe.logging import configure_logging
@@ -137,11 +137,18 @@ def main(
         1 / inference_sampling_rate  # end of the first kernel in batch
         - fduration / 2  # account for whitening padding
         - integration_window_length  # account for time to build peak
-        + psd_length # account for time taken to build up psd
+        + psd_length  # account for time taken to build up psd
     )
 
     logging.info("Beginning search")
-    data_it = data_iterator(datadir, channel, ifos, sample_rate, timeout=10, min_duration=psd_length+3)
+    data_it = data_iterator(
+        datadir,
+        channel,
+        ifos,
+        sample_rate,
+        timeout=10,
+        min_duration=psd_length + 3,
+    )
     integrated = None  # need this for static linters
     for X, t0, ready in data_it:
         # adjust t0 to represent the timestamp of the

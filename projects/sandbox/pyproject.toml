@@ -35,6 +35,7 @@ repository_directory = "${BASE_DIR}/model_repo/"
 force_generation = false
 Tb = 31536000  # 1 year of background
 inference_sampling_rate = 4
+integration_window_length = 1
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
@@ -247,7 +248,7 @@ ifos = "${base.ifos}"
 chunk_size = 4096
 
 # analysis args
-integration_window_length = 1
+integration_window_length = "${base.integration_window_length}"
 cluster_window_length = 8
 fduration = "${base.fduration}"
 psd_length = "${base.inference_psd_length}"
@@ -278,3 +279,20 @@ rejected_params = "${base.basedir}/test/rejected-parameters.h5"
 output_fname = "${base.basedir}/infer/2D_param_hist.html"
 log_file = "${base.basedir}/log/2D_param_hist.log"
 verbose = "${base.verbose}"
+
+[tool.typeo.scripts.online-deployment]
+outdir = "${base.basedir}"
+datadir = "/dev/shm/kafka"
+ifos = "${base.ifos}"
+channel = "GDS-CALIB_STRAIN_CLEAN"
+sample_rate = "${base.sample_rate}"
+kernel_length = "${base.kernel_length}"
+inference_sampling_rate = "${base.inference_sampling_rate}"
+psd_length = "${base.inference_psd_length}"
+batch_size = "${base.inference_batch_size}"
+fduration = "${base.fduration}"
+integration_window_length = "${base.integration_window_length}"
+highpass = "${base.highpass}"
+verbose = "${base.verbose}"
+
+commands.resnet = "${base.resnet}"

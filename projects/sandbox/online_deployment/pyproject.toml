@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "online-deployment"
+version = "0.1.0"
+description = "Deploy Aframe on live data"
+authors = [
+    "Alec Gunny <alec.gunny@ligo.org>",
+    "Will Benoit <benoi090@umn.edu>"
+]
+license = "MIT"
+#readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+ligo-gracedb = "^2.11"
+gwpy = "^2.1"
+
+ml4gw = {path = "../../../ml4gw", develop = true}
+"aframe.logging" = {path = "../../../libs/logging", develop = true}
+"aframe.architectures" = {path = "../../../libs/architectures", develop = true, extras=["wrapper"]}
+"aframe.analysis" = {path = "../../../libs/analysis", develop = true}
+
+[[tool.poetry.source]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu116"
+secondary = true
+default = false
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^6.2"
+
+[tool.poetry.scripts]
+online-deployment = "online_deployment.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

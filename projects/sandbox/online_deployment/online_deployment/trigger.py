@@ -63,7 +63,7 @@ class Searcher:
 
         self.inference_sampling_rate = inference_sampling_rate
         self.refractory_period = refractory_period
-        self.last_detection_time = time.time()
+        self.last_detection_time = time.time() - self.refractory_period
         self.detecting = False
 
     def check_refractory(self, value):
@@ -175,7 +175,7 @@ class Trigger:
         # and set filecontents=None
         response = self.gdb.createEvent(
             group="CBC",
-            pipeline="BBHNet",
+            pipeline="Aframe",
             filename=filename,
             search="BBH",
             filecontents=filecontents,

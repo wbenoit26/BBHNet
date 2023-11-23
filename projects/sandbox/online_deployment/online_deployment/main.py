@@ -5,11 +5,11 @@ from typing import Callable, List, Optional
 import numpy as np
 import torch
 from gwpy.timeseries import TimeSeries, TimeSeriesDict
-from online_deployment.buffer import DataBuffer
+from online_deployment.buffer import OutputBuffer, SnapshotWhitener
 from online_deployment.dataloading import data_iterator
 from online_deployment.trigger import Searcher, Trigger
 
-from aframe.architectures import BatchWhitener, architecturize
+from aframe.architectures import architecturize
 from aframe.logging import configure_logging
 
 
@@ -25,7 +25,6 @@ def main(
     kernel_length: float,
     inference_sampling_rate: float,
     psd_length: float,
-    batch_size: float,
     fduration: float,
     integration_window_length: float,
     fftlength: Optional[float] = None,
@@ -39,33 +38,26 @@ def main(
     logdir.mkdir(exist_ok=True, parents=True)
     configure_logging(outdir / "log" / "deploy.log", verbose)
 
-    buffer = DataBuffer(
-        ifos=ifos,
-        channel=channel,
-        kernel_length=kernel_length,
-        sample_rate=sample_rate,
-        inference_sampling_rate=inference_sampling_rate,
-        integration_window_length=integration_window_length,
-        psd_length=psd_length,
-    )
+    buffer = OutputBuffer(inference_sampling_rate, integration_window_length)
 
-    # instantiate network and preprocessor and
-    # load in their optimized parameters
+    # instantiate network and load in its optimized parameters
     weights_path = outdir / "training" / "weights.pt"
     logging.info(f"Build network and loading weights from {weights_path}")
 
     num_ifos = len(ifos)
     nn = architecture(num_ifos).to("cuda")
     fftlength = fftlength or kernel_length + fduration
-    preprocessor = BatchWhitener(
-        kernel_length,
-        sample_rate,
-        batch_size=batch_size,
-        inference_sampling_rate=inference_sampling_rate,
+    whitener = SnapshotWhitener(
+        num_channels=num_ifos,
+        psd_length=psd_length,
+        kernel_length=kernel_length,
         fduration=fduration,
+        sample_rate=sample_rate,
+        inference_sampling_rate=inference_sampling_rate,
         fftlength=fftlength,
         highpass=highpass,
     )
+    current_state = whitener.get_initial_state().to("cuda")
 
     weights = torch.load(weights_path)
     nn.load_state_dict(weights)
@@ -105,7 +97,7 @@ def main(
             start = int(i * sample_rate)
             stop = start + int(sample_rate * kernel_length)
             x = X[None, :, start:stop]
-            x = preprocessor(x)
+            x = whitener(x)
             whitened.append(x[0])
         whitened = torch.cat(whitened, axis=1).cpu().numpy()
 
@@ -137,7 +129,6 @@ def main(
         1 / inference_sampling_rate  # end of the first kernel in batch
         - fduration / 2  # account for whitening padding
         - integration_window_length  # account for time to build peak
-        + psd_length  # account for time taken to build up psd
     )
 
     logging.info("Beginning search")
@@ -147,7 +138,6 @@ def main(
         ifos,
         sample_rate,
         timeout=10,
-        min_duration=psd_length + 3,
     )
     integrated = None  # need this for static linters
     for X, t0, ready in data_it:
@@ -184,22 +174,21 @@ def main(
                 # first check if there's an event
                 # we need to write, even if we don't
                 # have all of its future data
-                X, y, event = buffer.finalize()
-                if event is not None:
-                    write_state(X, y, event)
-                buffer.reset_states()
+                # X, y, event = buffer.finalize()
+                # if event is not None:
+                #     write_state(X, y, event)
+                # buffer.reset_states()
                 continue
         elif not in_spec:
             # the frame is analysis ready, but previous frames
             # weren't, so reset our running states and taper
             # the data in to not add frequency artifacts
             logging.info(f"Frame {t0} is ready again, resetting states")
-            buffer.reset_states()
+            buffer.reset_state()
             in_spec = True
 
         X = X.to("cuda")
-        batch = buffer.make_batch(X, t0)
-        batch = preprocessor(batch)
+        batch, current_state = whitener(X, current_state)
         y = nn(batch)[:, 0]
         integrated = buffer.update(y)
 
@@ -207,11 +196,11 @@ def main(
         if event is not None:
             trigger = get_trigger(event)
             trigger.submit(event, ifos)
-            buffer.event = event
+            # buffer.event = event
 
         # slough off old data from our buffer states,
         # but save the states around an event if the
         # buffer has one associated with it
-        X, y, event = buffer.finalize()
-        if event is not None:
-            write_state(X, y, event)
+        # X, y, event = buffer.finalize()
+        # if event is not None:
+        #     write_state(X, y, event)

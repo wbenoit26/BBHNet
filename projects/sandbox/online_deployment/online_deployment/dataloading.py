@@ -105,7 +105,6 @@ def data_iterator(
     channel: str,
     ifos: List[str],
     sample_rate: float,
-    min_duration: float,
     timeout: Optional[float] = None,
 ) -> torch.Tensor:
     prefix, length, t0 = get_prefix(data_dir / ifos[0])
@@ -172,7 +171,9 @@ def data_iterator(
             frame = np.stack(frames)
             frame_buffer = np.append(frame_buffer, frame, axis=1)
             dur = frame_buffer.shape[-1] / 16384
-            if dur >= min_duration:
+            # Need at least 3 seconds to be able to crop out edge effects
+            # from resampling and just yield the middle second
+            if dur >= 3:
                 x = resample(
                     frame_buffer, int(sample_rate * dur), axis=1, window="hann"
                 )

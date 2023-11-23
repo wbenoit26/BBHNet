@@ -4,9 +4,9 @@ from typing import Callable, List, Optional
 
 import numpy as np
 import torch
-from gwpy.timeseries import TimeSeries, TimeSeriesDict
-from online_deployment.buffer import OutputBuffer, SnapshotWhitener
+from online_deployment.buffer import OutputBuffer
 from online_deployment.dataloading import data_iterator
+from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
 
 from aframe.architectures import architecturize
@@ -87,40 +87,6 @@ def main(
             idx = 1
         return triggers[idx]
 
-    def write_state(X, y, event):
-        # TODO: implement this via overlap add
-        # More broadly, where should this live?
-        window_length = X.shape[1] / sample_rate / 2
-        t0 = event.time - window_length + fduration / 2
-        whitened = []
-        for i in range(4):
-            start = int(i * sample_rate)
-            stop = start + int(sample_rate * kernel_length)
-            x = X[None, :, start:stop]
-            x = whitener(x)
-            whitened.append(x[0])
-        whitened = torch.cat(whitened, axis=1).cpu().numpy()
-
-        state = TimeSeriesDict()
-        for i, ifo in enumerate(ifos):
-            chan = f"{ifo}:{channel}"
-            ts = TimeSeries(
-                whitened[i], sample_rate=sample_rate, t0=t0, channel=chan
-            )
-            state[chan] = ts
-
-        y = y.cpu().numpy()
-        pad = int(fduration / 2 * inference_sampling_rate)
-        y = y[pad:-pad]
-        state["AFRAME"] = TimeSeries(
-            y, sample_rate=inference_sampling_rate, t0=t0, channel="AFRAME"
-        )
-
-        trigger = get_trigger(event)
-        timestamp = int(event.time)
-        fname = f"event-{timestamp}.h5"
-        state.write(trigger.gdb.write_dir / fname)
-
     # offset the initial timestamp of our
     # integrated outputs relative to the
     # initial timestamp of the most recently
@@ -132,13 +98,7 @@ def main(
     )
 
     logging.info("Beginning search")
-    data_it = data_iterator(
-        datadir,
-        channel,
-        ifos,
-        sample_rate,
-        timeout=10,
-    )
+    data_it = data_iterator(datadir, channel, ifos, sample_rate, timeout=10)
     integrated = None  # need this for static linters
     for X, t0, ready in data_it:
         # adjust t0 to represent the timestamp of the
@@ -170,25 +130,20 @@ def main(
                     "Missing frame files after timestep {}, "
                     "resetting states".format(t0)
                 )
-
-                # first check if there's an event
-                # we need to write, even if we don't
-                # have all of its future data
-                # X, y, event = buffer.finalize()
-                # if event is not None:
-                #     write_state(X, y, event)
-                # buffer.reset_states()
+                buffer.reset_state()
                 continue
         elif not in_spec:
             # the frame is analysis ready, but previous frames
-            # weren't, so reset our running states and taper
-            # the data in to not add frequency artifacts
+            # weren't, so reset our running states
             logging.info(f"Frame {t0} is ready again, resetting states")
+            current_state = whitener.get_initial_state().to("cuda")
             buffer.reset_state()
             in_spec = True
 
         X = X.to("cuda")
-        batch, current_state = whitener(X, current_state)
+        batch, current_state, inference_ready = whitener(X, current_state)
+        if not inference_ready:
+            continue
         y = nn(batch)[:, 0]
         integrated = buffer.update(y)
 
@@ -196,11 +151,3 @@ def main(
         if event is not None:
             trigger = get_trigger(event)
             trigger.submit(event, ifos)
-            # buffer.event = event
-
-        # slough off old data from our buffer states,
-        # but save the states around an event if the
-        # buffer has one associated with it
-        # X, y, event = buffer.finalize()
-        # if event is not None:
-        #     write_state(X, y, event)

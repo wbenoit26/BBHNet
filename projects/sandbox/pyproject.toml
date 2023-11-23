@@ -292,6 +292,6 @@ psd_length = "${base.inference_psd_length}"
 fduration = "${base.fduration}"
 integration_window_length = "${base.integration_window_length}"
 highpass = "${base.highpass}"
-verbose = "${base.verbose}"
+verbose = true
 
 commands.resnet = "${base.resnet}"

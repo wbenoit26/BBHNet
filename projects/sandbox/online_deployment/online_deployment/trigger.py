@@ -1,17 +1,22 @@
 import json
 import logging
-import time
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Literal, Union
 
 import numpy as np
+from gwpy.time import tconvert
 from ligo.gracedb.rest import GraceDb
 
 from aframe.analysis.ledger.events import EventSet
 
 Gdb = Literal["playground", "test", "production"]
-SECONDS_PER_YEAR = 31556952
+SECONDS_PER_YEAR = 31556952  # 60 * 60 * 24 * 365.2425
+
+
+def current_gps_time():
+    return float(tconvert(datetime.now(timezone.utc)))
 
 
 @dataclass
@@ -63,11 +68,11 @@ class Searcher:
 
         self.inference_sampling_rate = inference_sampling_rate
         self.refractory_period = refractory_period
-        self.last_detection_time = time.time() - self.refractory_period
+        self.last_detection_time = current_gps_time() - self.refractory_period
         self.detecting = False
 
     def check_refractory(self, value):
-        time_since_last = time.time() - self.last_detection_time
+        time_since_last = current_gps_time() - self.last_detection_time
         if time_since_last < self.refractory_period:
             logging.warning(
                 "Detected event with detection statistic {:0.3f} "
@@ -89,7 +94,8 @@ class Searcher:
             "Event coalescence time found to be {:0.3f} "
             "with FAR {:0.3e} Hz".format(timestamp, far)
         )
-        self.last_detection_time = time.time()
+
+        self.last_detection_time = timestamp
         return Event(timestamp, value, far)
 
     def search(self, y: np.ndarray, t0: float):

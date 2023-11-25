@@ -67,8 +67,10 @@ class SnapshotWhitener(torch.nn.Module):
         update = update[None, :, :]
         X, current_state = self.snapshotter(update, current_state)
         # If we haven't had enough updates in a row to
-        # meaningfully whiten, don't bother whitening
-        if self.contiguous_update_size < self.state_size - update.shape[-1]:
+        # meaningfully whiten, note that for upstream processes
+        full_psd_present = (
+            self.contiguous_update_size >= self.state_size - update.shape[-1]
+        )
+        if not full_psd_present:
             self.contiguous_update_size += update.shape[-1]
-            return X, current_state, False
         return self.batch_whitener(X), current_state, True

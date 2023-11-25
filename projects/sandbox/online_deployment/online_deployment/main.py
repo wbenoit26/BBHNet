@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 import torch
-from online_deployment.buffer import InputBuffer, OutputBuffer
+from online_deployment.buffer import DataBuffer
 from online_deployment.dataloading import data_iterator
 from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
@@ -41,11 +41,12 @@ def main(
     configure_logging(outdir / "log" / "deploy.log", verbose)
 
     num_ifos = len(ifos)
-    input_buffer = InputBuffer(num_ifos, sample_rate, input_buffer_length)
-
-    output_buffer = OutputBuffer(
+    buffer = DataBuffer(
+        num_ifos,
+        sample_rate,
         inference_sampling_rate,
         integration_window_length,
+        input_buffer_length,
         output_buffer_length,
     )
 
@@ -146,34 +147,27 @@ def main(
                 # Write whatever data we have from the event
                 if not last_event_written:
                     write_path = last_event_trigger.gdb.write_dir
-                    strain_fname = f"event-{int(last_event_time)}_strain.h5"
-                    input_buffer.write(
-                        write_path / strain_fname, last_event_time
-                    )
-
-                    output_fname = f"event-{int(last_event_time)}.h5"
-                    output_buffer.write(
-                        write_path / output_fname, last_event_time
-                    )
+                    buffer.write(write_path, last_event_time)
                     last_event_written = True
-                input_buffer.reset_state()
-                output_buffer.reset_state()
+                buffer.reset_state()
                 continue
         elif not in_spec:
             # the frame is analysis ready, but previous frames
             # weren't, so reset our running states
             logging.info(f"Frame {t0} is ready again, resetting states")
             current_state = whitener.get_initial_state().to("cuda")
-            input_buffer.reset_state()
-            output_buffer.reset_state()
+            buffer.reset_state()
             in_spec = True
 
         X = X.to("cuda")
-        input_buffer.update(X, t0)
         batch, current_state, full_psd_present = whitener(X, current_state)
         y = nn(batch)[:, 0]
-        integrated = output_buffer.update(
-            y, t0 + time_offset + integration_window_length
+        integrated = buffer.update(
+            input_update=X,
+            output_update=y,
+            t0=t0,
+            input_time_offset=0,
+            output_time_offset=time_offset + integration_window_length,
         )
 
         event = None
@@ -189,15 +183,10 @@ def main(
             last_event_trigger = trigger
             last_event_time = event.time
 
-        # TODO: make future buffer less arbitrary
         if (
             not last_event_written
             and last_event_time + output_buffer_length / 2 < t0
         ):
             write_path = last_event_trigger.gdb.write_dir
-            strain_fname = f"event-{int(last_event_time)}_strain.h5"
-            input_buffer.write(write_path / strain_fname, last_event_time)
-
-            output_fname = f"event-{int(last_event_time)}.h5"
-            output_buffer.write(write_path / output_fname, last_event_time)
+            buffer.write(write_path, last_event_time)
             last_event_written = True

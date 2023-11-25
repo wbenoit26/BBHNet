@@ -3,6 +3,52 @@ import numpy as np
 import torch
 
 
+class DataBuffer:
+    def __init__(
+        self,
+        num_channels: int,
+        sample_rate: float,
+        inference_sampling_rate: float,
+        integration_window_length: float,
+        input_buffer_length: float,
+        output_buffer_length: float,
+    ):
+        self.input_buffer = InputBuffer(
+            num_channels=num_channels,
+            sample_rate=sample_rate,
+            buffer_length=input_buffer_length,
+        )
+        self.output_buffer = OutputBuffer(
+            inference_sampling_rate=inference_sampling_rate,
+            integration_window_length=integration_window_length,
+            buffer_length=output_buffer_length,
+        )
+
+    def reset_state(self):
+        self.input_buffer.reset_state()
+        self.output_buffer.reset_state()
+
+    def write(self, write_path, event_time):
+        input_fname = write_path / f"event_{int(event_time)}_strain.h5"
+        output_fname = write_path / f"event_{int(event_time)}_output.h5"
+
+        self.input_buffer.write(input_fname, event_time)
+        self.output_buffer.write(output_fname, event_time)
+
+    def update(
+        self,
+        input_update,
+        output_update,
+        t0,
+        input_time_offset,
+        output_time_offset,
+    ):
+        self.input_buffer.update(input_update, t0 + input_time_offset)
+        return self.output_buffer.update(
+            output_update, t0 + output_time_offset
+        )
+
+
 class InputBuffer:
     def __init__(
         self,

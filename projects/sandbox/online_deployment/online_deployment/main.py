@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 import torch
-from online_deployment.buffer import OutputBuffer
+from online_deployment.buffer import InputBuffer, OutputBuffer
 from online_deployment.dataloading import data_iterator
 from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
@@ -32,6 +32,7 @@ def main(
     refractory_period: float = 8,
     far_per_day: float = 1,
     secondary_far_threshold: float = 24,
+    input_buffer_length=70,
     output_buffer_length=8,
     verbose: bool = False,
 ):
@@ -39,7 +40,10 @@ def main(
     logdir.mkdir(exist_ok=True, parents=True)
     configure_logging(outdir / "log" / "deploy.log", verbose)
 
-    buffer = OutputBuffer(
+    num_ifos = len(ifos)
+    input_buffer = InputBuffer(num_ifos, sample_rate, input_buffer_length)
+
+    output_buffer = OutputBuffer(
         inference_sampling_rate,
         integration_window_length,
         output_buffer_length,
@@ -49,7 +53,6 @@ def main(
     weights_path = outdir / "training" / "weights.pt"
     logging.info(f"Build network and loading weights from {weights_path}")
 
-    num_ifos = len(ifos)
     nn = architecture(num_ifos).to("cuda")
     fftlength = fftlength or kernel_length + fduration
     whitener = SnapshotWhitener(
@@ -142,26 +145,34 @@ def main(
                 )
                 # Write whatever data we have from the event
                 if not last_event_written:
-                    fname = f"event-{int(last_event_time)}.h5"
-                    buffer.write(
-                        last_event_trigger.gdb.write_dir / fname,
-                        last_event_time,
+                    write_path = last_event_trigger.gdb.write_dir
+                    strain_fname = f"event-{int(last_event_time)}_strain.h5"
+                    input_buffer.write(
+                        write_path / strain_fname, last_event_time
+                    )
+
+                    output_fname = f"event-{int(last_event_time)}.h5"
+                    output_buffer.write(
+                        write_path / output_fname, last_event_time
                     )
                     last_event_written = True
-                buffer.reset_state()
+                input_buffer.reset_state()
+                output_buffer.reset_state()
                 continue
         elif not in_spec:
             # the frame is analysis ready, but previous frames
             # weren't, so reset our running states
             logging.info(f"Frame {t0} is ready again, resetting states")
             current_state = whitener.get_initial_state().to("cuda")
-            buffer.reset_state()
+            input_buffer.reset_state()
+            output_buffer.reset_state()
             in_spec = True
 
         X = X.to("cuda")
+        input_buffer.update(X, t0)
         batch, current_state, full_psd_present = whitener(X, current_state)
         y = nn(batch)[:, 0]
-        integrated = buffer.update(
+        integrated = output_buffer.update(
             y, t0 + time_offset + integration_window_length
         )
 
@@ -183,8 +194,10 @@ def main(
             not last_event_written
             and last_event_time + output_buffer_length / 2 < t0
         ):
-            fname = f"event-{int(last_event_time)}.h5"
-            buffer.write(
-                last_event_trigger.gdb.write_dir / fname, last_event_time
-            )
+            write_path = last_event_trigger.gdb.write_dir
+            strain_fname = f"event-{int(last_event_time)}_strain.h5"
+            input_buffer.write(write_path / strain_fname, last_event_time)
+
+            output_fname = f"event-{int(last_event_time)}.h5"
+            output_buffer.write(write_path / output_fname, last_event_time)
             last_event_written = True

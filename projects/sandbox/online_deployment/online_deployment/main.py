@@ -32,13 +32,18 @@ def main(
     refractory_period: float = 8,
     far_per_day: float = 1,
     secondary_far_threshold: float = 24,
+    output_buffer_length=8,
     verbose: bool = False,
 ):
     logdir = outdir / "log"
     logdir.mkdir(exist_ok=True, parents=True)
     configure_logging(outdir / "log" / "deploy.log", verbose)
 
-    buffer = OutputBuffer(inference_sampling_rate, integration_window_length)
+    buffer = OutputBuffer(
+        inference_sampling_rate,
+        integration_window_length,
+        output_buffer_length,
+    )
 
     # instantiate network and load in its optimized parameters
     weights_path = outdir / "training" / "weights.pt"
@@ -74,7 +79,7 @@ def main(
         Trigger(outdir / "triggers"),
         Trigger(outdir / "secondary-triggers"),
     ]
-    in_spec = False
+    in_spec = True
 
     def get_trigger(event):
         fars_hz = [i / 3600 / 24 for i in fars]
@@ -116,6 +121,9 @@ def main(
                 trigger = get_trigger(event)
                 trigger.submit(event, ifos)
                 searcher.detecting = False
+                last_event_written = False
+                last_event_trigger = trigger
+                last_event_time = event.time
 
             # check if this is because the frame stream stopped
             # being analysis ready, or if it's because frames
@@ -123,13 +131,18 @@ def main(
             if X is not None:
                 logging.warning(
                     "Frame {} is not analysis ready. Performing "
-                    "inference but ignoring triggers".format(t0)
+                    "inference but ignoring any triggers".format(t0)
                 )
             else:
                 logging.warning(
                     "Missing frame files after timestep {}, "
                     "resetting states".format(t0)
                 )
+                # Write whatever data we have from the event
+                if not last_event_written:
+                    fname = f"event-{int(last_event_time)}.h5"
+                    buffer.write(last_event_trigger.gdb.write_dir / fname)
+                    last_event_written = True
                 buffer.reset_state()
                 continue
         elif not in_spec:
@@ -141,13 +154,25 @@ def main(
             in_spec = True
 
         X = X.to("cuda")
-        batch, current_state, inference_ready = whitener(X, current_state)
-        if not inference_ready:
-            continue
+        batch, current_state, full_psd_present = whitener(X, current_state)
         y = nn(batch)[:, 0]
-        integrated = buffer.update(y)
+        integrated = buffer.update(y, t0)
 
-        event = searcher.search(integrated, t0 + time_offset)
+        event = None
+        # Only search if we had sufficient data to whiten with
+        # and if frames were analysis ready
+        if full_psd_present and ready:
+            event = searcher.search(integrated, t0 + time_offset)
+
         if event is not None:
             trigger = get_trigger(event)
             trigger.submit(event, ifos)
+            last_event_written = False
+            last_event_trigger = trigger
+            last_event_time = event.time
+
+        # TODO: make future buffer less arbitrary
+        if not last_event_written and last_event_time < t0 + 3:
+            fname = f"event-{int(last_event_time)}.h5"
+            buffer.write(last_event_trigger.gdb.write_dir / fname)
+            last_event_written = True

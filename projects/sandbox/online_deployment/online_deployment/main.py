@@ -161,7 +161,9 @@ def main(
         X = X.to("cuda")
         batch, current_state, full_psd_present = whitener(X, current_state)
         y = nn(batch)[:, 0]
-        integrated = buffer.update(y, t0)
+        integrated = buffer.update(
+            y, t0 + time_offset + integration_window_length
+        )
 
         event = None
         # Only search if we had sufficient data to whiten with
@@ -177,7 +179,10 @@ def main(
             last_event_time = event.time
 
         # TODO: make future buffer less arbitrary
-        if not last_event_written and last_event_time < t0 + 3:
+        if (
+            not last_event_written
+            and last_event_time + output_buffer_length / 2 < t0
+        ):
             fname = f"event-{int(last_event_time)}.h5"
             buffer.write(
                 last_event_trigger.gdb.write_dir / fname, last_event_time

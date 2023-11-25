@@ -73,4 +73,4 @@ class SnapshotWhitener(torch.nn.Module):
         )
         if not full_psd_present:
             self.contiguous_update_size += update.shape[-1]
-        return self.batch_whitener(X), current_state, True
+        return self.batch_whitener(X), current_state, full_psd_present

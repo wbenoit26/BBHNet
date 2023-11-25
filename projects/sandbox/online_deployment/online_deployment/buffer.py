@@ -1,4 +1,5 @@
 import h5py
+import numpy as np
 import torch
 
 
@@ -28,13 +29,12 @@ class OutputBuffer:
     def write(self, write_path, event_time):
         start = self.t0
         stop = self.t0 + self.buffer_length
-        steps = self.buffer_size
-        time = torch.arange(start, stop, steps)
+        time = np.linspace(start, stop, self.buffer_size)
         with h5py.File(write_path, "w") as f:
             f.attrs.create("event_time", data=event_time)
             f.create_dataset("time", data=time)
-            f.create_dataset("output", data=self.output_buffer)
-            f.create_dataset("integrated", data=self.integrated_buffer)
+            f.create_dataset("output", data=self.output_buffer.cpu())
+            f.create_dataset("integrated", data=self.integrated_buffer.cpu())
 
     def integrate(self, x: torch.Tensor):
         x = x.view(1, 1, -1)

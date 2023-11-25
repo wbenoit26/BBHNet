@@ -293,7 +293,7 @@ fduration = "${base.fduration}"
 integration_window_length = "${base.integration_window_length}"
 highpass = "${base.highpass}"
 far_per_day = 1
-secondary_far_threshold = 3600
+secondary_far_threshold = 24
 verbose = false
 
 commands.resnet = "${base.resnet}"

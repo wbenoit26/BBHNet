@@ -32,7 +32,7 @@ def main(
     refractory_period: float = 8,
     far_per_day: float = 1,
     secondary_far_threshold: float = 24,
-    input_buffer_length=70,
+    input_buffer_length=75,
     output_buffer_length=8,
     verbose: bool = False,
 ):

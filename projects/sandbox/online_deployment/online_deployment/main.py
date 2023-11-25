@@ -105,6 +105,8 @@ def main(
     logging.info("Beginning search")
     data_it = data_iterator(datadir, channel, ifos, sample_rate, timeout=10)
     integrated = None  # need this for static linters
+    last_event_written = True
+    last_event_time = 0
     for X, t0, ready in data_it:
         # adjust t0 to represent the timestamp of the
         # leading edge of the input to the network

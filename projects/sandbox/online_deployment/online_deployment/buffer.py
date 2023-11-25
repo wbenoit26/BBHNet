@@ -28,13 +28,13 @@ class OutputBuffer:
     def write(self, write_path):
         buffer = TimeSeriesDict()
         buffer["output"] = TimeSeries(
-            self.output_buffer,
+            self.output_buffer.cpu(),
             sample_rate=self.inference_sampling_rate,
             t0=self.t0,
             channel="output",
         )
         buffer["integrated"] = TimeSeries(
-            self.integrated_buffer,
+            self.integrated_buffer.cpu(),
             sample_rate=self.inference_sampling_rate,
             t0=self.t0,
             channel="output",

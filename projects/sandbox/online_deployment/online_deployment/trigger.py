@@ -95,7 +95,7 @@ class Searcher:
             "with FAR {:0.3e} Hz".format(timestamp, far)
         )
 
-        self.last_detection_time = timestamp
+        self.last_detection_time = current_gps_time()
         return Event(timestamp, value, far)
 
     def search(self, y: np.ndarray, t0: float):

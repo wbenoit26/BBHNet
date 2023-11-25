@@ -1,5 +1,5 @@
+import h5py
 import torch
-from gwpy.timeseries import TimeSeries, TimeSeriesDict
 
 
 class OutputBuffer:
@@ -25,21 +25,16 @@ class OutputBuffer:
             (self.buffer_size,), device="cuda"
         )
 
-    def write(self, write_path):
-        buffer = TimeSeriesDict()
-        buffer["output"] = TimeSeries(
-            self.output_buffer.cpu(),
-            sample_rate=self.inference_sampling_rate,
-            t0=self.t0,
-            channel="output",
-        )
-        buffer["integrated"] = TimeSeries(
-            self.integrated_buffer.cpu(),
-            sample_rate=self.inference_sampling_rate,
-            t0=self.t0,
-            channel="output",
-        )
-        buffer.write(write_path)
+    def write(self, write_path, event_time):
+        start = self.t0
+        stop = self.t0 + self.buffer_length
+        steps = self.buffer_size
+        time = torch.arange(start, stop, steps)
+        with h5py.File(write_path, "w") as f:
+            f.attrs.create("event_time", data=event_time)
+            f.create_dataset("time", data=time)
+            f.create_dataset("output", data=self.output_buffer)
+            f.create_dataset("integrated", data=self.integrated_buffer)
 
     def integrate(self, x: torch.Tensor):
         x = x.view(1, 1, -1)

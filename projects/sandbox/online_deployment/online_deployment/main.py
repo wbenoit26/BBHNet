@@ -143,7 +143,10 @@ def main(
                 # Write whatever data we have from the event
                 if not last_event_written:
                     fname = f"event-{int(last_event_time)}.h5"
-                    buffer.write(last_event_trigger.gdb.write_dir / fname)
+                    buffer.write(
+                        last_event_trigger.gdb.write_dir / fname,
+                        last_event_time,
+                    )
                     last_event_written = True
                 buffer.reset_state()
                 continue
@@ -176,5 +179,7 @@ def main(
         # TODO: make future buffer less arbitrary
         if not last_event_written and last_event_time < t0 + 3:
             fname = f"event-{int(last_event_time)}.h5"
-            buffer.write(last_event_trigger.gdb.write_dir / fname)
+            buffer.write(
+                last_event_trigger.gdb.write_dir / fname, last_event_time
+            )
             last_event_written = True

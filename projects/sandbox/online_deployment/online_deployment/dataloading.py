@@ -215,6 +215,13 @@ def read_channel(fname, channel):
                 )
                 time.sleep(2e-1)
                 continue
+            elif str(e).startswith("Missing FrEndOfFile structure"):
+                logging.warning(
+                    "File {} was missing FrEndOfFile structure, "
+                    "attempting reread {}".format(fname, i + 1)
+                )
+                time.sleep(1e-1)
+                continue
             else:
                 raise
 

@@ -82,7 +82,7 @@ class Searcher:
             return None
 
         timestamp = t0 + idx / self.inference_sampling_rate
-        far = self.background.far(value)
+        far = max(self.background.far(value), 0)
         far /= SECONDS_PER_YEAR
 
         logging.info(

@@ -25,6 +25,7 @@ def main(
     kernel_length: float,
     inference_sampling_rate: float,
     psd_length: float,
+    trigger_distance: float,
     fduration: float,
     integration_window_length: float,
     fftlength: Optional[float] = None,
@@ -105,6 +106,12 @@ def main(
         - fduration / 2  # account for whitening padding
         - integration_window_length  # account for time to build peak
     )
+
+    if trigger_distance is not None:
+        if trigger_distance > 0:
+            time_offset -= kernel_length - trigger_distance
+        if trigger_distance < 0:
+            time_offset -= np.abs(trigger_distance) - fduration / 2
 
     logging.info("Beginning search")
     data_it = data_iterator(datadir, channel, ifos, sample_rate, timeout=10)

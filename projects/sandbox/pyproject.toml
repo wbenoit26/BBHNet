@@ -39,6 +39,7 @@ integration_window_length = 1
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
+trigger_distance = -0.75
 
 waveform_duration = 8
 reference_frequency = 50
@@ -137,7 +138,7 @@ highpass = "${base.highpass}"
 psd_length = "${base.training_psd_length}"
 
 # augmentation args
-trigger_distance = -0.75
+trigger_distance = "${base.trigger_distance}"
 waveform_prob = 0.277
 swap_frac = 0.014
 mute_frac = 0.055
@@ -289,6 +290,7 @@ sample_rate = "${base.sample_rate}"
 kernel_length = "${base.kernel_length}"
 inference_sampling_rate = 2048
 psd_length = "${base.inference_psd_length}"
+trigger_distance = "${base.trigger_distance}"
 fduration = "${base.fduration}"
 integration_window_length = "${base.integration_window_length}"
 highpass = "${base.highpass}"

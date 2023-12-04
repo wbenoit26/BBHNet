@@ -33,6 +33,7 @@ def main(
     refractory_period: float = 8,
     far_per_day: float = 1,
     secondary_far_threshold: float = 24,
+    server: str = "test",
     input_buffer_length=75,
     output_buffer_length=8,
     verbose: bool = False,
@@ -81,8 +82,8 @@ def main(
     )
 
     triggers = [
-        Trigger(outdir / "triggers"),
-        Trigger(outdir / "secondary-triggers"),
+        Trigger(server=server, write_dir=outdir / "triggers"),
+        Trigger(server=server, write_dir=outdir / "secondary-triggers"),
     ]
     in_spec = True
 
@@ -136,7 +137,7 @@ def main(
                 searcher.detecting = False
                 last_event_written = False
                 last_event_trigger = trigger
-                last_event_time = event.time
+                last_event_time = event.gpstime
 
             # check if this is because the frame stream stopped
             # being analysis ready, or if it's because frames
@@ -153,7 +154,7 @@ def main(
                 )
                 # Write whatever data we have from the event
                 if not last_event_written:
-                    write_path = last_event_trigger.gdb.write_dir
+                    write_path = last_event_trigger.write_dir
                     buffer.write(write_path, last_event_time)
                     last_event_written = True
                 buffer.reset_state()
@@ -188,12 +189,12 @@ def main(
             trigger.submit(event, ifos)
             last_event_written = False
             last_event_trigger = trigger
-            last_event_time = event.time
+            last_event_time = event.gpstime
 
         if (
             not last_event_written
             and last_event_time + output_buffer_length / 2 < t0
         ):
-            write_path = last_event_trigger.gdb.write_dir
+            write_path = last_event_trigger.write_dir
             buffer.write(write_path, last_event_time)
             last_event_written = True

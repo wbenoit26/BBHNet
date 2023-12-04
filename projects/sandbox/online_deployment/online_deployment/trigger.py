@@ -16,14 +16,14 @@ SECONDS_PER_YEAR = 31556952  # 60 * 60 * 24 * 365.2425
 
 @dataclass
 class Event:
-    time: float
+    gpstime: float
     detection_statistic: float
     far: float
 
     def __str__(self):
         return (
             "Event("
-            f"time={self.time:0.3f}, "
+            f"gpstime={self.gpstime:0.3f}, "
             f"detection_statistic={self.detection_statistic:0.2f}, "
             f"far={self.far:0.3e} Hz"
             ")"
@@ -137,22 +137,13 @@ class Searcher:
 
 @dataclass
 class LocalGdb:
-    write_dir: Path
-
-    def __post_init__(self):
-        self.write_dir.mkdir(exist_ok=True, parents=True)
-
-    def createEvent(self, filecontents: str, filename: str, **_):
-        filecontents = json.loads(filecontents.replace("'", '"'))
-        filename = self.write_dir / filename
-        logging.info(f"Submitting trigger to file {filename}")
-        with open(filename, "w") as f:
-            json.dump(filecontents, f)
+    def createEvent(self, filename: str, **_):
         return filename
 
 
 class Trigger:
-    def __init__(self, server: Union[Gdb, Path]) -> None:
+    def __init__(self, server: Union[Gdb, Path], write_dir: Path) -> None:
+        self.write_dir = write_dir
         if isinstance(server, Path):
             self.gdb = LocalGdb(server)
             return
@@ -165,20 +156,23 @@ class Trigger:
             raise ValueError(f"Unknown server {server}")
         self.gdb = GraceDb(service_url=server)
 
-    def submit(self, event: Event, ifos: List[str]):
-        filename = f"event-{int(event.time)}.json"
-        event = asdict(event)
-        event["IFOs"] = ifos
-        filecontents = str(event)
+    def __post_init__(self):
+        self.write_dir.mkdir(exist_ok=True, parents=True)
 
-        # alternatively we can write a file to disk,
-        # pass that path to the filename argument,
-        # and set filecontents=None
+    def submit(self, event: Event, ifos: List[str]):
+        filename = self.write_dir / f"event-{int(event.gpstime)}.json"
+        event = asdict(event)
+        event["ifos"] = ifos
+        filecontents = str(event)
+        filecontents = json.loads(filecontents.replace("'", '"'))
+        logging.info(f"Submitting trigger to file {filename}")
+        with open(filename, "w") as f:
+            json.dump(filecontents, f)
+
         response = self.gdb.createEvent(
             group="CBC",
-            pipeline="Aframe",
-            filename=filename,
-            search="BBH",
-            filecontents=filecontents,
+            pipeline="aframe",
+            filename=str(filename),
+            search="AllSky",
         )
         return response

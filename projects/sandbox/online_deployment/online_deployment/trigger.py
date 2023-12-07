@@ -41,6 +41,7 @@ class Searcher:
         logging.debug("Loading background measurements")
         background_file = outdir / "infer" / "background.h5"
         self.background = EventSet.read(background_file)
+        self.min_far = 1 / self.background.Tb * SECONDS_PER_YEAR
 
         fars_per_day = np.sort(fars_per_day)
         num_events = np.floor(fars_per_day * self.background.Tb / 3600 / 24)
@@ -82,7 +83,7 @@ class Searcher:
             return None
 
         timestamp = t0 + idx / self.inference_sampling_rate
-        far = max(self.background.far(value), 0)
+        far = max(self.background.far(value), self.min_far)
         far /= SECONDS_PER_YEAR
 
         logging.info(

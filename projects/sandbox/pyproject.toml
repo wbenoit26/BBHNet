@@ -296,6 +296,7 @@ integration_window_length = "${base.integration_window_length}"
 highpass = "${base.highpass}"
 far_per_day = 1
 secondary_far_threshold = 24
+server = "test"
 verbose = false
 
 commands.resnet = "${base.resnet}"

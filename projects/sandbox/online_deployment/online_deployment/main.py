@@ -119,7 +119,7 @@ def main(
     integrated = None  # need this for static linters
     last_event_written = True
     last_event_time = 0
-    for X, t0, ready in data_it:
+    for X, t0, t_write, ready in data_it:
         # adjust t0 to represent the timestamp of the
         # leading edge of the input to the network
         if not ready:
@@ -133,7 +133,7 @@ def main(
                     integrated[-1], t0 - 1, len(integrated) - 1
                 )
                 trigger = get_trigger(event)
-                trigger.submit(event, ifos)
+                trigger.submit(event, ifos, t_write)
                 searcher.detecting = False
                 last_event_written = False
                 last_event_trigger = trigger
@@ -186,7 +186,7 @@ def main(
 
         if event is not None:
             trigger = get_trigger(event)
-            trigger.submit(event, ifos)
+            trigger.submit(event, ifos, t_write)
             last_event_written = False
             last_event_trigger = trigger
             last_event_time = event.gpstime

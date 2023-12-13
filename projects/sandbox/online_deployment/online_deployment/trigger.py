@@ -2,16 +2,22 @@ import json
 import logging
 import time
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Literal, Union
 
 import numpy as np
+from gwpy.time import tconvert
 from ligo.gracedb.rest import GraceDb
 
 from aframe.analysis.ledger.events import EventSet
 
 Gdb = Literal["playground", "test", "production"]
 SECONDS_PER_YEAR = 31556952  # 60 * 60 * 24 * 365.2425
+
+
+def gps_from_timestamp(timestamp: float):
+    return float(tconvert(datetime.fromtimestamp(timestamp, tz=timezone.utc)))
 
 
 @dataclass
@@ -160,20 +166,27 @@ class Trigger:
     def __post_init__(self):
         self.write_dir.mkdir(exist_ok=True, parents=True)
 
-    def submit(self, event: Event, ifos: List[str]):
-        filename = self.write_dir / f"event-{int(event.gpstime)}.json"
+    def submit(self, event: Event, ifos: List[str], t_write: float):
+        gpstime = event.gpstime
+        filename = self.write_dir / f"event-{int(gpstime)}.json"
         event = asdict(event)
         event["ifos"] = ifos
         filecontents = str(event)
         filecontents = json.loads(filecontents.replace("'", '"'))
-        logging.info(f"Submitting trigger to file {filename}")
         with open(filename, "w") as f:
             json.dump(filecontents, f)
 
+        logging.info(f"Submitting trigger to file {filename}")
         response = self.gdb.createEvent(
             group="CBC",
             pipeline="aframe",
             filename=str(filename),
             search="AllSky",
         )
+        submission_time = float(tconvert(datetime.now(tz=timezone.utc)))
+        # Time to submit since event occured and since the file was written
+        total_latency = submission_time - gpstime
+        aframe_latency = submission_time - gps_from_timestamp(t_write)
+        logging.info(f"Total Latency: {total_latency}")
+        logging.info(f"Aframe Latency: {aframe_latency}")
         return response

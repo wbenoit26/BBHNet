@@ -217,7 +217,7 @@ def main(
     # skip the 0lag shift
     for i in range(num_shifts):
         seq_id = sequence_id + 2 * i
-        parameters += f"0,{(i + 1) * max_shift},{seq_id}\n"
+        parameters += f"0,{i * max_shift},{seq_id}\n"
 
     submit_file = condor.make_submit_file(
         executable="infer",

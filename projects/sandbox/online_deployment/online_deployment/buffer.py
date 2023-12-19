@@ -29,8 +29,9 @@ class DataBuffer:
         self.output_buffer.reset_state()
 
     def write(self, write_path, event_time):
-        input_fname = write_path / f"event_{int(event_time)}_strain.h5"
-        output_fname = write_path / f"event_{int(event_time)}_output.h5"
+        event_dir = f"event_{int(event_time)}"
+        input_fname = write_path / event_dir / "strain.h5"
+        output_fname = write_path / event_dir / "network_output.h5"
 
         self.input_buffer.write(input_fname, event_time)
         self.output_buffer.write(output_fname, event_time)

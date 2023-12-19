@@ -1,23 +1,37 @@
 import json
 import logging
+import os
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import List, Literal
 
 import numpy as np
 from gwpy.time import tconvert
 from ligo.gracedb.rest import GraceDb
+from online_deployment.dataloading import get_prefix
 
 from aframe.analysis.ledger.events import EventSet
 
-Gdb = Literal["playground", "test", "production"]
+Gdb = Literal["local", "playground", "test", "production"]
 SECONDS_PER_YEAR = 31556952  # 60 * 60 * 24 * 365.2425
 
 
 def gps_from_timestamp(timestamp: float):
     return float(tconvert(datetime.fromtimestamp(timestamp, tz=timezone.utc)))
+
+
+def get_frame_write_time(gpstime: float, datadir: Path, ifos: List[str]):
+    t_write = 0
+    prefix, length, _ = get_prefix(datadir / ifos[0])
+    middle = prefix.split("_")[1]
+    for ifo in ifos:
+        prefix = f"{ifo[0]}-{ifo}_{middle}"
+        fname = datadir / ifo / f"{prefix}-{int(gpstime)}-{length}.gwf"
+        t_write = max(t_write, os.path.getmtime(fname))
+
+    return gps_from_timestamp(t_write)
 
 
 @dataclass
@@ -113,6 +127,7 @@ class Searcher:
         # if we're already mid-detection, take as
         # the event the max in the current window
         max_val = y.max()
+        print(max_val)
         if self.detecting:
             idx = np.argmax(y)
             self.detecting = False
@@ -149,16 +164,16 @@ class LocalGdb:
 
 
 class Trigger:
-    def __init__(self, server: Union[Gdb, Path], write_dir: Path) -> None:
+    def __init__(self, server: Gdb, write_dir: Path) -> None:
         self.write_dir = write_dir
-        if isinstance(server, Path):
-            self.gdb = LocalGdb(server)
-            return
 
         if server in ["playground", "test"]:
             server = f"https://gracedb-{server}.ligo.org/api/"
         elif server == "production":
             server = "https://gracedb.ligo.org/api/"
+        elif server == "local":
+            self.gdb = LocalGdb()
+            return
         else:
             raise ValueError(f"Unknown server {server}")
         self.gdb = GraceDb(service_url=server)
@@ -166,9 +181,12 @@ class Trigger:
     def __post_init__(self):
         self.write_dir.mkdir(exist_ok=True, parents=True)
 
-    def submit(self, event: Event, ifos: List[str], t_write: float):
+    def submit(self, event: Event, ifos: List[str], datadir: Path):
         gpstime = event.gpstime
-        filename = self.write_dir / f"event-{int(gpstime)}.json"
+        event_dir = self.write_dir / f"event_{int(gpstime)}"
+        event_dir.mkdir(exist_ok=True, parents=True)
+        filename = event_dir / f"event-{int(gpstime)}.json"
+
         event = asdict(event)
         event["ifos"] = ifos
         filecontents = str(event)
@@ -184,9 +202,16 @@ class Trigger:
             search="AllSky",
         )
         submission_time = float(tconvert(datetime.now(tz=timezone.utc)))
+        t_write = get_frame_write_time(gpstime, datadir, ifos)
         # Time to submit since event occured and since the file was written
         total_latency = submission_time - gpstime
-        aframe_latency = submission_time - gps_from_timestamp(t_write)
-        logging.info(f"Total Latency: {total_latency}")
-        logging.info(f"Aframe Latency: {aframe_latency}")
+        write_latency = t_write - gpstime
+        aframe_latency = submission_time - t_write
+
+        latency_fname = event_dir / "latency.log"
+        latency = "Total Latency (s),Write Latency (s),Aframe Latency (s)\n"
+        latency += f"{total_latency},{write_latency},{aframe_latency}"
+        with open(latency_fname, "w") as f:
+            f.write(latency)
+
         return response

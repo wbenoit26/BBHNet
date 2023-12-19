@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -40,7 +41,9 @@ def main(
 ):
     logdir = outdir / "log"
     logdir.mkdir(exist_ok=True, parents=True)
-    configure_logging(outdir / "log" / "deploy.log", verbose)
+    # Create a new log file each time we start using the current UTC time
+    log_suffix = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    configure_logging(outdir / "log" / f"deploy_{log_suffix}.log", verbose)
 
     num_ifos = len(ifos)
     buffer = DataBuffer(
@@ -82,8 +85,10 @@ def main(
     )
 
     triggers = [
-        Trigger(server=server, write_dir=outdir / "triggers"),
-        Trigger(server=server, write_dir=outdir / "secondary-triggers"),
+        Trigger(server=server, write_dir=outdir / server / "triggers"),
+        Trigger(
+            server=server, write_dir=outdir / server / "secondary-triggers"
+        ),
     ]
     in_spec = True
 
@@ -119,7 +124,7 @@ def main(
     integrated = None  # need this for static linters
     last_event_written = True
     last_event_time = 0
-    for X, t0, t_write, ready in data_it:
+    for X, t0, ready in data_it:
         # adjust t0 to represent the timestamp of the
         # leading edge of the input to the network
         if not ready:
@@ -133,7 +138,7 @@ def main(
                     integrated[-1], t0 - 1, len(integrated) - 1
                 )
                 trigger = get_trigger(event)
-                trigger.submit(event, ifos, t_write)
+                trigger.submit(event, ifos, datadir)
                 searcher.detecting = False
                 last_event_written = False
                 last_event_trigger = trigger
@@ -186,7 +191,7 @@ def main(
 
         if event is not None:
             trigger = get_trigger(event)
-            trigger.submit(event, ifos, t_write)
+            trigger.submit(event, ifos, datadir)
             last_event_written = False
             last_event_trigger = trigger
             last_event_time = event.gpstime

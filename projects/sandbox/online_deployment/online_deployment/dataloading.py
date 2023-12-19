@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 import time
 from pathlib import Path
@@ -116,8 +115,6 @@ def data_iterator(
     # try to grab a frame that's been filtered out
     t0 += length * 2
     frame_buffer = np.zeros((2, 0))
-    t_write = 0
-    write_times = []
     slc = slice(-int(2 * sample_rate), -int(sample_rate))
     last_ready = True
     while True:
@@ -139,7 +136,7 @@ def data_iterator(
                         )
                     )
 
-                    yield None, t0, None, False
+                    yield None, t0, False
 
                     frame_buffer = np.zeros((2, 0))
                     last_ready = False
@@ -151,10 +148,6 @@ def data_iterator(
                 # vector to see if it's analysis ready
                 x = read_channel(fname, f"{ifo}:{channel}")
                 frames.append(x.value)
-
-                # Grab the creation time for latency calculation
-                # Max to take whichever ifo was slowest to write
-                t_write = max(os.path.getctime(fname), t_write)
 
                 state_channel = f"{ifo}:GDS-CALIB_STATE_VECTOR"
                 state_vector = read_channel(fname, state_channel)
@@ -178,7 +171,6 @@ def data_iterator(
 
             frame = np.stack(frames)
             frame_buffer = np.append(frame_buffer, frame, axis=1)
-            write_times.append(t_write)
             dur = frame_buffer.shape[-1] / 16384
             # Need at least 3 seconds to be able to crop out edge effects
             # from resampling and just yield the middle second
@@ -188,8 +180,7 @@ def data_iterator(
                 )
                 x = x[:, slc]
                 frame_buffer = frame_buffer[:, 16384:]
-                write_times = write_times[1:]
-                yield torch.Tensor(x), t0 - 1, write_times[-2], last_ready
+                yield torch.Tensor(x), t0 - 1, last_ready
 
             last_ready = ready
             t0 += length

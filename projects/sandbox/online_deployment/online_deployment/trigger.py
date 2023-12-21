@@ -127,7 +127,6 @@ class Searcher:
         # if we're already mid-detection, take as
         # the event the max in the current window
         max_val = y.max()
-        print(max_val)
         if self.detecting:
             idx = np.argmax(y)
             self.detecting = False

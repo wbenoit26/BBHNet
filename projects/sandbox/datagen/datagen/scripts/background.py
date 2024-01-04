@@ -331,25 +331,25 @@ def deploy(
     # authenticate()
 
     state_flags = get_state_flags(ifos, state_flag)
-    train_segments = query_segments(
-        state_flags,
-        train_start,
-        train_stop,
-        minimum_train_length,
-    )
-    if not train_segments:
-        raise ValueError(
-            "No segments of minimum length, not producing background"
-        )
+    # train_segments = query_segments(
+    #     state_flags,
+    #     train_start,
+    #     train_stop,
+    #     minimum_train_length,
+    # )
+    # if not train_segments:
+    #     raise ValueError(
+    #         "No segments of minimum length, not producing background"
+    #     )
 
-    test_segments = query_segments(
+    segments = query_segments(
         state_flags,
         train_stop,
         test_stop,
         minimum_test_length,
     )
 
-    segments = list(train_segments) + list(test_segments)
+    # segments = list(train_segments) + list(test_segments)
 
     # determine which segments we need to generate data for
     segments = validate_segments(

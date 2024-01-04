@@ -213,6 +213,9 @@ def main(
 
     max_shift = max(shifts)
     num_shifts = get_num_shifts(data_dir, Tb, max_shift)
+    # Add a shift so that the zero-lag isn't counted
+    # towards the total
+    num_shifts += 1
     parameters = "shift0,shift1,seq_id\n"
     # skip the 0lag shift
     for i in range(num_shifts):

@@ -106,10 +106,14 @@ def data_iterator(
     channel: str,
     ifos: List[str],
     sample_rate: float,
-    ifo_suffix: str = "",
+    ifo_suffix: str = None,
     timeout: Optional[float] = None,
 ) -> torch.Tensor:
-    prefix, length, t0 = get_prefix(datadir / (ifos[0] + "_" + ifo_suffix))
+    if ifo_suffix is not None:
+        ifo_dir = "_".join([ifos[0], ifo_suffix])
+    else:
+        ifo_dir = ifos[0]
+    prefix, length, t0 = get_prefix(datadir / ifo_dir)
     middle = "_".join(prefix.split("_")[1:])
 
     # give ourselves a little buffer so we don't
@@ -125,7 +129,10 @@ def data_iterator(
         ready = True
         for ifo in ifos:
             prefix = f"{ifo[0]}-{ifo}_{middle}"
-            ifo_dir = "_".join([ifo, ifo_suffix])
+            if ifo_suffix is not None:
+                ifo_dir = "_".join([ifo, ifo_suffix])
+            else:
+                ifo_dir = ifo
             fname = datadir / ifo_dir / f"{prefix}-{t0}-{length}.gwf"
 
             tick = time.time()

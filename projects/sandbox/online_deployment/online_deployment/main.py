@@ -35,7 +35,7 @@ def main(
     far_per_day: float = 1,
     secondary_far_threshold: float = 24,
     server: str = "test",
-    ifo_suffix: str = "",
+    ifo_suffix: str = None,
     input_buffer_length=75,
     output_buffer_length=8,
     verbose: bool = False,

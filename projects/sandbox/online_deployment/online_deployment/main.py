@@ -35,6 +35,7 @@ def main(
     far_per_day: float = 1,
     secondary_far_threshold: float = 24,
     server: str = "test",
+    ifo_suffix: str = "",
     input_buffer_length=75,
     output_buffer_length=8,
     verbose: bool = False,
@@ -120,7 +121,14 @@ def main(
             time_offset -= np.abs(trigger_distance) - fduration / 2
 
     logging.info("Beginning search")
-    data_it = data_iterator(datadir, channel, ifos, sample_rate, timeout=10)
+    data_it = data_iterator(
+        datadir=datadir,
+        channel=channel,
+        ifos=ifos,
+        sample_rate=sample_rate,
+        ifo_suffix=ifo_suffix,
+        timeout=10,
+    )
     integrated = None  # need this for static linters
     last_event_written = True
     last_event_time = 0

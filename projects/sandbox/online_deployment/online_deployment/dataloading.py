@@ -51,23 +51,23 @@ def _is_gwf(match):
     return match is not None and match.group("suffix") == "gwf"
 
 
-def get_prefix(data_dir: Path):
-    if not data_dir.exists():
-        raise FileNotFoundError(f"No data directory '{data_dir}'")
+def get_prefix(datadir: Path):
+    if not datadir.exists():
+        raise FileNotFoundError(f"No data directory '{datadir}'")
 
-    fnames = map(str, data_dir.iterdir())
+    fnames = map(str, datadir.iterdir())
     matches = map(fname_re.search, fnames)
     matches = list(filter(_is_gwf, matches))
 
     if len(matches) == 0:
-        raise ValueError(f"No valid .gwf files in data directory '{data_dir}'")
+        raise ValueError(f"No valid .gwf files in data directory '{datadir}'")
 
     t0 = min([int(i.group("start")) for i in matches])
     prefixes = set([i.group("prefix") for i in matches])
     if len(prefixes) > 1:
         raise ValueError(
             "Too many prefixes {} in data directory '{}'".format(
-                list(prefixes), data_dir
+                list(prefixes), datadir
             )
         )
 
@@ -75,16 +75,16 @@ def get_prefix(data_dir: Path):
     if len(durations) > 1:
         raise ValueError(
             "Too many lengths {} in data directory '{}'".format(
-                list(durations), data_dir
+                list(durations), datadir
             )
         )
     return list(prefixes)[0], int(list(durations)[0]), t0
 
 
-def reset_t0(data_dir, last_t0):
+def reset_t0(datadir, last_t0):
     tick = time.time()
     while True:
-        matches = [fname_re.search(i.name) for i in data_dir.iterdir()]
+        matches = [fname_re.search(i.name) for i in datadir.iterdir()]
         t0s = np.array([int(i.group("start")) for i in matches if _is_gwf(i)])
         t0s = t0s[t0s > last_t0]
         if t0s.size > 0:
@@ -102,14 +102,15 @@ def reset_t0(data_dir, last_t0):
 
 
 def data_iterator(
-    data_dir: Path,
+    datadir: Path,
     channel: str,
     ifos: List[str],
     sample_rate: float,
+    ifo_suffix: str = "",
     timeout: Optional[float] = None,
 ) -> torch.Tensor:
-    prefix, length, t0 = get_prefix(data_dir / ifos[0])
-    middle = prefix.split("_")[1]
+    prefix, length, t0 = get_prefix(datadir / (ifos[0] + "_" + ifo_suffix))
+    middle = "_".join(prefix.split("_")[1:])
 
     # give ourselves a little buffer so we don't
     # try to grab a frame that's been filtered out
@@ -124,7 +125,8 @@ def data_iterator(
         ready = True
         for ifo in ifos:
             prefix = f"{ifo[0]}-{ifo}_{middle}"
-            fname = data_dir / ifo / f"{prefix}-{t0}-{length}.gwf"
+            ifo_dir = "_".join([ifo, ifo_suffix])
+            fname = datadir / ifo_dir / f"{prefix}-{t0}-{length}.gwf"
 
             tick = time.time()
             while not fname.exists():
@@ -140,7 +142,7 @@ def data_iterator(
 
                     frame_buffer = np.zeros((2, 0))
                     last_ready = False
-                    t0 = reset_t0(data_dir / ifo, t0 - length)
+                    t0 = reset_t0(datadir / ifo, t0 - length)
                     break
             else:
                 # we never broke, therefore the filename exists,

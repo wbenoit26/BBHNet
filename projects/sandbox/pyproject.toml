@@ -31,9 +31,10 @@ channel = "OPEN"
 frame_type = "HOFT_C01"
 state_flag = "DATA" # open data segments
 resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
+resnet2d = {layers = [3, 4, 6, 3], norm_groups = 16}
 repository_directory = "${BASE_DIR}/model_repo/" 
 force_generation = false
-Tb = 31536000  # 1 year of background
+Tb = 5184000 #31536000  # 1 year of background
 inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64
@@ -156,7 +157,8 @@ use_amp = true
 seed = "${base.global_seed}"
 
 # arch parameters
-commands.resnet = "${base.resnet}"
+#commands.resnet = "${base.resnet}"
+commands.resnet2d = "${base.resnet2d}"
 
 [tool.typeo.scripts.export-model]
 # paths
@@ -183,6 +185,7 @@ clean = true
 
 # arch parameters
 commands.resnet = "${base.resnet}"
+commands.resnet2d = "${base.resnet2d}"
 
 [tool.typeo.scripts.deploy-timeslide-waveforms]
 # paths and what not

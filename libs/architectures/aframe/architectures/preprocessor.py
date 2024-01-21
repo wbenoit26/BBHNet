@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 
 import torch
+from torchaudio.transforms import Spectrogram
 
 from ml4gw.transforms import SpectralDensity, Whiten
 from ml4gw.utils.slicing import unfold_windows
@@ -92,9 +93,11 @@ class BatchWhitener(torch.nn.Module):
             fast=highpass is not None,
         )
         self.whitener = Whiten(fduration, sample_rate, highpass)
+        self.spectrogram = Spectrogram(n_fft=128)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x, psd = self.psd_estimator(x)
         x = self.whitener(x.double(), psd)
         x = unfold_windows(x, self.kernel_size, self.stride_size)
-        return x[:, 0]
+        x = self.spectrogram(x[:, 0])
+        return x

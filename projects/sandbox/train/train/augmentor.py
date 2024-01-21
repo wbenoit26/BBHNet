@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 import numpy as np
 import torch
+from torchaudio.transforms import Spectrogram
 from train.augmentations import (
     ChannelMuter,
     ChannelSwapper,
@@ -236,6 +237,8 @@ class AframeBatchAugmentor(torch.nn.Module):
         # curriculum learning step
         if self.snr is not None:
             self.snr.step()
+
+        X = Spectrogram(n_fft=128).to("cuda")(X)
 
         return X, y
 

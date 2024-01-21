@@ -29,9 +29,9 @@ def train_for_one_epoch(
         optimizer.zero_grad(set_to_none=True)  # reset gradient
         targets = torch.clamp(targets, 0, 1)
 
-        with torch.autocast("cuda", enabled=scaler is not None):
-            predictions = model(samples)
-            loss = criterion(predictions, targets)
+        # with torch.autocast("cuda", enabled=scaler is not None):
+        predictions = model(samples)
+        loss = criterion(predictions, targets)
         train_loss += loss.item() * len(samples)
         samples_seen += len(samples)
 

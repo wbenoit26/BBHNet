@@ -11,6 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
 torch = {version = "^1.10", source = "torch"}
+torchaudio = "^0.13.0"
 typeo = {git = "https://github.com/ML4GW/typeo.git", branch = "main", optional = true}
 ml4gw = {path = "../../ml4gw", develop = true}
 h5py = "^3.9.0"

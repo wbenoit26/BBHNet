@@ -146,8 +146,8 @@ def main(
     if aframe_instances is not None:
         scale_model(aframe, aframe_instances)
 
-    size = int(kernel_length * sample_rate)
-    input_shape = (batch_size, num_ifos, size)
+    # size = int(kernel_length * sample_rate)
+    input_shape = (batch_size, num_ifos, 65, 49)
     # the network will have some different keyword
     # arguments required for export depending on
     # the target inference platform

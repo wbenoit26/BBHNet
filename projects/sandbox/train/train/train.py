@@ -230,6 +230,7 @@ def main(
     background_fnames, valid_fnames = train_utils.get_background_fnames(
         background_dir, min_validation_duration
     )
+    logging.info("Got background filenames")
     window_length = kernel_length + fduration
     sample_length = window_length + psd_length
     fftlength = fftlength or window_length
@@ -240,12 +241,13 @@ def main(
         window_length, sample_rate, fftlength, fast=fast, average="median"
     )
     whitener = Whiten(fduration, sample_rate, highpass).to(device)
+    logging.info("Created PSD estimator and whitener")
 
     # load the waveforms
     waveforms, valid_waveforms = train_utils.get_waveforms(
         waveform_dataset, ifos, sample_rate, valid_frac
     )
-
+    logging.info("Loaded waveforms")
     if valid_waveforms is not None:
         logging.info(
             "Loading validation segments "

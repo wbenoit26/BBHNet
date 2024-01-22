@@ -3,6 +3,7 @@ import numpy as np
 from bilby.core.prior import (
     ConditionalPowerLaw,
     ConditionalPriorDict,
+    ConditionalUniform,
     Constraint,
     Cosine,
     Gaussian,
@@ -10,12 +11,14 @@ from bilby.core.prior import (
     PowerLaw,
     PriorDict,
     Sine,
+    Triangular,
     Uniform,
 )
 from bilby.gw.prior import UniformComovingVolume, UniformSourceFrame
 
 from aframe.priors.utils import (
     mass_condition_powerlaw,
+    mass_condition_uniform,
     mass_constraints,
     read_priors_from_file,
 )
@@ -130,6 +133,46 @@ def spin_bbh(cosmology: cosmo.Cosmology = COSMOLOGY) -> PriorDict:
     prior["phi_jl"] = 0
 
     detector_frame_prior = True
+    return prior, detector_frame_prior
+
+
+def end_o3_ratesandpops_bns(
+    cosmology: cosmo.Cosmology = COSMOLOGY,
+) -> ConditionalPriorDict:
+    """
+    Define a Bilby `PriorDict` that matches the BNS distribution used
+    by the LIGO Rates and Populations group for pipeline searches
+    at the end of the third observing run.
+
+    Masses are defined in the source frame.
+
+    Args:
+        cosmology:
+            An `astropy` cosmology, used to determine redshift sampling
+
+    Returns:
+        prior:
+            `PriorDict` describing the binary black hole population
+        detector_frame_prior:
+            Boolean indicating which frame masses are defined in
+    """
+    prior = ConditionalPriorDict(uniform_extrinsic())
+    prior["mass_1"] = Triangular(mode=2.5, minimum=1, maximum=2.5, unit=msun)
+    prior["mass_2"] = ConditionalUniform(
+        condition_func=mass_condition_uniform,
+        minimum=1,
+        maximum=2.5,
+        unit=msun,
+    )
+    prior["redshift"] = UniformSourceFrame(
+        0, 0.15, name="redshift", cosmology=cosmology
+    )
+    spin_prior = uniform_spin()
+    for key, value in spin_prior.items():
+        prior[key] = value
+    prior["a_1"] = Uniform(0, 0.4)
+    prior["a_2"] = Uniform(0, 0.4)
+    detector_frame_prior = False
     return prior, detector_frame_prior
 
 

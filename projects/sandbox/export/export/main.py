@@ -34,6 +34,7 @@ def main(
     batch_size: int,
     fduration: float,
     psd_length: float,
+    n_fft: int,
     fftlength: Optional[float] = None,
     highpass: Optional[float] = None,
     weights: Optional[Path] = None,
@@ -147,7 +148,9 @@ def main(
         scale_model(aframe, aframe_instances)
 
     # size = int(kernel_length * sample_rate)
-    input_shape = (batch_size, num_ifos, 65, 49)
+    num_freqs = int(n_fft // 2 + 1)
+    num_times = int(kernel_length * sample_rate // (n_fft // 2) + 1)
+    input_shape = (batch_size, num_ifos, num_freqs, num_times)
     # the network will have some different keyword
     # arguments required for export depending on
     # the target inference platform

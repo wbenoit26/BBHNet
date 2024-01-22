@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 import numpy as np
 import torch
-from torchaudio.transforms import Spectrogram
 from train.augmentations import (
     ChannelMuter,
     ChannelSwapper,
@@ -92,6 +91,7 @@ class AframeBatchAugmentor(torch.nn.Module):
         phi: Callable,
         psd_estimator: Callable,
         whitener: Callable,
+        spectrogram: Callable,
         trigger_distance: float,
         mute_frac: float = 0.0,
         swap_frac: float = 0.0,
@@ -129,6 +129,7 @@ class AframeBatchAugmentor(torch.nn.Module):
         self.rescaler = rescaler
         self.psd_estimator = psd_estimator
         self.whitener = whitener
+        self.spectrogram = spectrogram
 
         # store ifo geometries
         tensors, vertices = gw.get_ifo_geometry(*ifos)
@@ -238,7 +239,7 @@ class AframeBatchAugmentor(torch.nn.Module):
         if self.snr is not None:
             self.snr.step()
 
-        X = Spectrogram(n_fft=128).to("cuda")(X)
+        X = self.spectrogram(X)
 
         return X, y
 

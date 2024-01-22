@@ -8,7 +8,6 @@ from typing import Callable, Dict, List, Optional
 import h5py
 import numpy as np
 import torch
-from torchaudio.transforms import Spectrogram
 from torchmetrics.classification import BinaryAUROC
 
 import ml4gw.gw as gw
@@ -218,6 +217,7 @@ class Validator:
     waveforms: torch.Tensor
     psd_estimator: Callable
     whitener: Callable
+    spectrogram: Callable
     sample_rate: float
     stride: float
     injection_stride: float
@@ -377,7 +377,7 @@ class Validator:
     def predict(self, model, X, psd):
         """Whiten the given data and pass it through the model"""
         X = self.whitener(X, psd)
-        X = Spectrogram(n_fft=128).to("cuda")(X)
+        X = self.spectrogram(X)
         return model(X)[:, 0]
 
     @torch.no_grad()

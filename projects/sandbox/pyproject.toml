@@ -18,9 +18,9 @@ accounting_group_user = "${LIGO_USERNAME}"
 accounting_group = "${LIGO_GROUP}"
 logdir = "${BASE_DIR}/log"
 sample_rate = 2048
-kernel_length = 1.5
+kernel_length = 8
 ifos = ['H1', 'L1']
-hopeless_snr_thresh = 4
+hopeless_snr_thresh = 30
 global_seed = 42
 
 train_start = 1240579783
@@ -39,13 +39,15 @@ inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
+n_fft = 128
+fftlength = 2
 
-waveform_duration = 8
+waveform_duration = 90
 reference_frequency = 50
 minimum_frequency = 20
 highpass = 32
-training_prior = "aframe.priors.priors.end_o3_ratesandpops"
-testing_prior = "aframe.priors.priors.end_o3_ratesandpops"
+training_prior = "aframe.priors.priors.end_o3_ratesandpops_bns"
+testing_prior = "aframe.priors.priors.end_o3_ratesandpops_bns"
 fduration = 1
 valid_frac = 0.25
 cosmology = "aframe.priors.cosmologies.planck"
@@ -100,7 +102,7 @@ minimum_frequency = "${base.minimum_frequency}"
 reference_frequency = "${base.reference_frequency}"
 datadir = "${base.datadir}/train"
 logdir = "${base.logdir}"
-num_signals = 100000
+num_signals = 10000
 prior = "${base.training_prior}"
 sample_rate = "${base.sample_rate}" 
 waveform_duration = "${base.waveform_duration}"
@@ -123,10 +125,10 @@ lr_ramp_epochs = 23
 weight_decay = 0.0
 
 snr_thresh = "${base.hopeless_snr_thresh}"
-max_min_snr = 12
+max_min_snr = 50
 max_snr = 100
 snr_alpha = 3
-snr_decay_steps = 989
+snr_decay_steps = 2000
 
 # data args
 ifos = "${base.ifos}"
@@ -135,6 +137,8 @@ kernel_length = "${base.kernel_length}"
 fduration = "${base.fduration}"
 highpass = "${base.highpass}"
 psd_length = "${base.training_psd_length}"
+fftlength = "${base.fftlength}"
+n_fft = "${base.n_fft}"
 
 # augmentation args
 trigger_distance = -0.75
@@ -157,7 +161,7 @@ use_amp = true
 seed = "${base.global_seed}"
 
 # arch parameters
-#commands.resnet = "${base.resnet}"
+commands.resnet = "${base.resnet}"
 commands.resnet2d = "${base.resnet2d}"
 
 [tool.typeo.scripts.export-model]
@@ -175,6 +179,8 @@ batch_size = "${base.inference_batch_size}"
 fduration = "${base.fduration}"
 highpass = "${base.highpass}"
 psd_length = "${base.inference_psd_length}"
+fftlength = "${base.fftlength}"
+n_fft = "${base.n_fft}"
 
 # repo/triton parameters
 aframe_instances = 6
@@ -215,7 +221,7 @@ reference_frequency = "${base.reference_frequency}"
 highpass = "${base.highpass}"
 spacing = 16
 buffer = 16
-snr_threshold = "${base.hopeless_snr_thresh}" 
+snr_threshold = 10 
 waveform_duration = "${base.waveform_duration}"
 waveform_approximant = "${base.waveform_approximant}"
 

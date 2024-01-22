@@ -11,6 +11,7 @@ sensitive-volume = "plots.sensitive_volume:main"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
+bilby = "^2.2"
 bokeh = "^3.0"
 scipy = "^1.7"
 h5py = "^3.5"

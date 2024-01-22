@@ -15,7 +15,7 @@ from typeo import scriptify
 from aframe.analysis.ledger.events import EventSet, RecoveredInjectionSet
 from aframe.analysis.ledger.injections import InjectionParameterSet
 from aframe.logging import configure_logging
-from aframe.priors.priors import end_o3_ratesandpops, log_normal_masses
+from aframe.priors.priors import end_o3_ratesandpops_bns, log_normal_masses
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
@@ -110,7 +110,7 @@ def main(
             )
 
     logging.info("Computing data likelihood under source prior")
-    source, _ = end_o3_ratesandpops(cosmology)
+    source, _ = end_o3_ratesandpops_bns(cosmology)
     source_probs = get_prob(source, foreground)
     source_rejected_probs = get_prob(source, rejected_params)
 
@@ -132,7 +132,7 @@ def main(
     x = np.arange(1, max_events + 1) / Tb
     thresholds = np.sort(background.detection_statistic)[-max_events:][::-1]
 
-    mass_combos = [(35, 35), (35, 20), (20, 20), (20, 10)]
+    mass_combos = [(1.5, 1.5), (35, 20), (20, 20), (20, 10)]
 
     weights = np.zeros((4, len(source_probs)))
     for i, combo in enumerate(mass_combos):

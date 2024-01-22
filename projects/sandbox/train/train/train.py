@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import torch
+from torchaudio.transforms import Spectrogram
 from train import utils as train_utils
 from train import validation as valid_utils
 from train.augmentations import SnrRescaler, SnrSampler
@@ -45,6 +46,7 @@ def main(
     psd_length: float,
     fduration: float,
     highpass: float,
+    n_fft: int,
     fftlength: Optional[float] = None,
     # augmentation args
     waveform_prob: float = 0.5,
@@ -230,7 +232,6 @@ def main(
     background_fnames, valid_fnames = train_utils.get_background_fnames(
         background_dir, min_validation_duration
     )
-    logging.info("Got background filenames")
     window_length = kernel_length + fduration
     sample_length = window_length + psd_length
     fftlength = fftlength or window_length
@@ -241,13 +242,12 @@ def main(
         window_length, sample_rate, fftlength, fast=fast, average="median"
     )
     whitener = Whiten(fduration, sample_rate, highpass).to(device)
-    logging.info("Created PSD estimator and whitener")
+    spectrogram = Spectrogram(n_fft=n_fft)
 
     # load the waveforms
     waveforms, valid_waveforms = train_utils.get_waveforms(
         waveform_dataset, ifos, sample_rate, valid_frac
     )
-    logging.info("Loaded waveforms")
     if valid_waveforms is not None:
         logging.info(
             "Loading validation segments "
@@ -274,6 +274,7 @@ def main(
             valid_waveforms,
             psd_estimator=psd_estimator,
             whitener=whitener,
+            spectrogram=spectrogram,
             snr_thresh=snr_thresh,
             highpass=highpass,
             sample_rate=sample_rate,
@@ -317,6 +318,7 @@ def main(
         phi=Uniform(-pi, pi),
         psd_estimator=psd_estimator,
         whitener=whitener,
+        spectrogram=spectrogram,
         trigger_distance=trigger_distance,
         mute_frac=mute_frac,
         swap_frac=swap_frac,

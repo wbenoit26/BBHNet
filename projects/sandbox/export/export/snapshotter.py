@@ -24,8 +24,8 @@ def add_streaming_input_preprocessor(
 ) -> "ExposedTensor":
     """Create a snapshotter model and add it to the repository"""
 
-    batch_size, num_ifos = input.shape[:2]
-    kernel_size = 1.5 * sample_rate
+    batch_size, num_ifos, num_freqs, num_times = input.shape
+    kernel_size = int((num_times - 1) * (num_freqs - 1))
     snapshotter = BackgroundSnapshotter(
         psd_length=psd_length,
         kernel_length=kernel_size / sample_rate,

@@ -4,10 +4,13 @@ from pathlib import Path
 from typing import List, Optional
 
 import torch
-from torchaudio.transforms import Spectrogram
 from train import utils as train_utils
 from train import validation as valid_utils
-from train.augmentations import SnrRescaler, SnrSampler
+from train.augmentations import (
+    MultiResolutionSpectrogram,
+    SnrRescaler,
+    SnrSampler,
+)
 from train.augmentor import AframeBatchAugmentor, AugmentedDataset
 
 from aframe.architectures.preprocessor import PsdEstimator
@@ -46,7 +49,7 @@ def main(
     psd_length: float,
     fduration: float,
     highpass: float,
-    n_fft: int,
+    n_ffts: List[int],
     fftlength: Optional[float] = None,
     # augmentation args
     waveform_prob: float = 0.5,
@@ -242,7 +245,9 @@ def main(
         window_length, sample_rate, fftlength, fast=fast, average="median"
     )
     whitener = Whiten(fduration, sample_rate, highpass).to(device)
-    spectrogram = Spectrogram(n_fft=n_fft)
+    spectrogram = MultiResolutionSpectrogram(
+        torch.tensor(n_ffts), sample_rate, kernel_length
+    )
 
     # load the waveforms
     waveforms, valid_waveforms = train_utils.get_waveforms(

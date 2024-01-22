@@ -39,7 +39,7 @@ inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
-n_fft = 128
+n_ffts = [64, 128, 256]
 fftlength = 2
 
 waveform_duration = 90
@@ -112,7 +112,7 @@ waveform_approximant = "${base.waveform_approximant}"
 [tool.typeo.scripts.train]
 # input and output paths
 background_dir = "${base.datadir}/train/background"
-waveform_dataset = "${base.datadir}/train/signals.h5"
+waveform_dataset = "${base.datadir}/train/signals_bns.h5"
 
 logdir = "${base.logdir}"
 outdir = "${base.basedir}/training"
@@ -138,7 +138,7 @@ fduration = "${base.fduration}"
 highpass = "${base.highpass}"
 psd_length = "${base.training_psd_length}"
 fftlength = "${base.fftlength}"
-n_fft = "${base.n_fft}"
+n_ffts = "${base.n_ffts}"
 
 # augmentation args
 trigger_distance = -0.75
@@ -180,7 +180,7 @@ fduration = "${base.fduration}"
 highpass = "${base.highpass}"
 psd_length = "${base.inference_psd_length}"
 fftlength = "${base.fftlength}"
-n_fft = "${base.n_fft}"
+n_ffts = "${base.n_ffts}"
 
 # repo/triton parameters
 aframe_instances = 6

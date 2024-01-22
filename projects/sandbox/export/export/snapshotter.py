@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 def add_streaming_input_preprocessor(
     ensemble: "EnsembleModel",
     input: "ExposedTensor",
+    kernel_length: float,
     psd_length: float,
     sample_rate: float,
     inference_sampling_rate: float,
@@ -24,11 +25,10 @@ def add_streaming_input_preprocessor(
 ) -> "ExposedTensor":
     """Create a snapshotter model and add it to the repository"""
 
-    batch_size, num_ifos, num_freqs, num_times = input.shape
-    kernel_size = int((num_times - 1) * (num_freqs - 1))
+    batch_size, num_ifos, _, _ = input.shape
     snapshotter = BackgroundSnapshotter(
         psd_length=psd_length,
-        kernel_length=kernel_size / sample_rate,
+        kernel_length=kernel_length,
         fduration=fduration,
         sample_rate=sample_rate,
         inference_sampling_rate=inference_sampling_rate,
@@ -51,7 +51,7 @@ def add_streaming_input_preprocessor(
     ensemble.add_input(streaming_model.inputs["stream"])
 
     preprocessor = BatchWhitener(
-        kernel_size / sample_rate,
+        kernel_length,
         sample_rate,
         batch_size=batch_size,
         inference_sampling_rate=inference_sampling_rate,

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import torch
 from export.snapshotter import add_streaming_input_preprocessor
@@ -34,7 +34,7 @@ def main(
     batch_size: int,
     fduration: float,
     psd_length: float,
-    n_fft: int,
+    n_ffts: List[int],
     fftlength: Optional[float] = None,
     highpass: Optional[float] = None,
     weights: Optional[Path] = None,
@@ -147,9 +147,9 @@ def main(
     if aframe_instances is not None:
         scale_model(aframe, aframe_instances)
 
-    # size = int(kernel_length * sample_rate)
-    num_freqs = int(n_fft // 2 + 1)
-    num_times = int(kernel_length * sample_rate // (n_fft // 2) + 1)
+    n_ffts = torch.tensor(n_ffts)
+    num_freqs = max(n_ffts // 2 + 1)
+    num_times = max(kernel_length * sample_rate // (n_ffts // 2) + 1)
     input_shape = (batch_size, num_ifos, num_freqs, num_times)
     # the network will have some different keyword
     # arguments required for export depending on
@@ -188,6 +188,7 @@ def main(
         whitened = add_streaming_input_preprocessor(
             ensemble,
             aframe.inputs["whitened"],
+            kernel_length=kernel_length,
             psd_length=psd_length,
             sample_rate=sample_rate,
             inference_sampling_rate=inference_sampling_rate,

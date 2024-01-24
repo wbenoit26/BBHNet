@@ -20,7 +20,7 @@ logdir = "${BASE_DIR}/log"
 sample_rate = 2048
 kernel_length = 8
 ifos = ['H1', 'L1']
-hopeless_snr_thresh = 30
+hopeless_snr_thresh = 20
 global_seed = 42
 
 train_start = 1240579783
@@ -39,7 +39,7 @@ inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
-n_ffts = [64, 128, 256]
+n_ffts = [128, 256]
 fftlength = 2
 
 waveform_duration = 90
@@ -229,7 +229,7 @@ waveform_approximant = "${base.waveform_approximant}"
 # paths
 model_repo_dir = "${base.repository_directory}"
 data_dir = "${base.datadir}/test/background"
-injection_set_file = "${base.datadir}/test/waveforms.h5"
+injection_set_file = "${base.datadir}/test/bns_waveforms.h5"
 output_dir = "${base.basedir}/infer"
 log_dir = "${base.logdir}"
 
@@ -267,7 +267,7 @@ verbose = "${base.verbose}"
 [tool.typeo.scripts.sensitive-volume]
 background_file = "${base.basedir}/infer/background.h5"
 foreground_file = "${base.basedir}/infer/foreground.h5"
-rejected_params = "${base.datadir}/test/rejected-parameters.h5"
+rejected_params = "${base.datadir}/test/bns-rejected-parameters.h5"
 output_dir = "${base.basedir}/infer/"
 log_file = "${base.basedir}/log/sensitive_volume.log"
 max_far = 1000
@@ -276,14 +276,14 @@ verbose = "${base.verbose}"
 
 [tool.typeo.scripts.1D_param_hist]
 foreground_file = "${base.basedir}/infer/foreground.h5"
-rejected_params = "${base.basedir}/test/rejected-parameters.h5"
+rejected_params = "${base.basedir}/test/bns-rejected-parameters.h5"
 output_fname = "${base.basedir}/infer/1D_param_hist.html"
 log_file = "${base.basedir}/log/1D_param_hist.log"
 verbose = "${base.verbose}"
 
 [tool.typeo.scripts.2D_param_hist]
 foreground_file = "${base.basedir}/infer/foreground.h5"
-rejected_params = "${base.basedir}/test/rejected-parameters.h5"
+rejected_params = "${base.basedir}/test/bns-rejected-parameters.h5"
 output_fname = "${base.basedir}/infer/2D_param_hist.html"
 log_file = "${base.basedir}/log/2D_param_hist.log"
 verbose = "${base.verbose}"

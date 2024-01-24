@@ -74,7 +74,7 @@ def main(
         random.seed(seed)
 
     # check if signal file already exists
-    signal_file = datadir / "signals.h5"
+    signal_file = datadir / "signals_bns.h5"
 
     if signal_file.exists() and not force_generation:
         logging.info(

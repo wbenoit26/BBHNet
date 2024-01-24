@@ -244,10 +244,10 @@ def main(
     parameters["num_injections"] = num_injections
 
     response_set = LigoResponseSet(**parameters)
-    waveform_fname = output_dir / "waveforms.h5"
+    waveform_fname = output_dir / "bns_waveforms.h5"
     utils.io_with_blocking(response_set.write, waveform_fname)
 
-    rejected_fname = output_dir / "rejected-parameters.h5"
+    rejected_fname = output_dir / "bns-rejected-parameters.h5"
     utils.io_with_blocking(rejected_params.write, rejected_fname)
 
     # TODO: compute probability of all parameters against
@@ -382,7 +382,7 @@ def deploy(
     # check to see if any of the target files are
     # missing or if we've indicated to force
     # generation even if they are
-    for fname in ["waveforms.h5", "rejected-parameters.h5"]:
+    for fname in ["bns_waveforms.h5", "bns-rejected-parameters.h5"]:
         if not (writedir / fname).exists() or force_generation:
             break
     else:
@@ -448,13 +448,13 @@ def deploy(
     condor.watch(dag_id, condordir)
 
     # once all jobs are done, merge the output files
-    waveform_fname = writedir / "waveforms.h5"
-    waveform_files = list(outdir.rglob("waveforms.h5"))
+    waveform_fname = writedir / "bns_waveforms.h5"
+    waveform_files = list(outdir.rglob("bns_waveforms.h5"))
     logging.info(f"Merging output waveforms to file {waveform_fname}")
     LigoResponseSet.aggregate(waveform_files, waveform_fname, clean=True)
 
-    params_fname = writedir / "rejected-parameters.h5"
-    param_files = list(outdir.rglob("rejected-parameters.h5"))
+    params_fname = writedir / "bns-rejected-parameters.h5"
+    param_files = list(outdir.rglob("bns-rejected-parameters.h5"))
     logging.info(f"Merging rejected parameters to file {params_fname}")
     InjectionParameterSet.aggregate(param_files, params_fname, clean=True)
 

@@ -6,14 +6,13 @@ from typing import List, Optional
 import torch
 from train import utils as train_utils
 from train import validation as valid_utils
-from train.augmentations import (
-    MultiResolutionSpectrogram,
-    SnrRescaler,
-    SnrSampler,
-)
+from train.augmentations import SnrRescaler, SnrSampler
 from train.augmentor import AframeBatchAugmentor, AugmentedDataset
 
-from aframe.architectures.preprocessor import PsdEstimator
+from aframe.architectures.preprocessor import (
+    MultiResolutionSpectrogram,
+    PsdEstimator,
+)
 from aframe.logging import configure_logging
 from aframe.trainer import trainify
 from ml4gw.dataloading import Hdf5TimeSeriesDataset
@@ -246,7 +245,7 @@ def main(
     )
     whitener = Whiten(fduration, sample_rate, highpass).to(device)
     spectrogram = MultiResolutionSpectrogram(
-        torch.tensor(n_ffts), sample_rate, kernel_length
+        kernel_length, sample_rate, n_fft=n_ffts
     )
 
     # load the waveforms

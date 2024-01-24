@@ -148,8 +148,8 @@ def main(
         scale_model(aframe, aframe_instances)
 
     n_ffts = torch.tensor(n_ffts)
-    num_freqs = max(n_ffts // 2 + 1)
-    num_times = max(kernel_length * sample_rate // (n_ffts // 2) + 1)
+    num_freqs = int(max(n_ffts // 2 + 1))
+    num_times = int(max(kernel_length * sample_rate // (n_ffts // 2) + 1))
     input_shape = (batch_size, num_ifos, num_freqs, num_times)
     # the network will have some different keyword
     # arguments required for export depending on
@@ -194,6 +194,7 @@ def main(
             inference_sampling_rate=inference_sampling_rate,
             fduration=fduration,
             fftlength=fftlength,
+            n_ffts=n_ffts,
             highpass=highpass,
             streams_per_gpu=streams_per_gpu,
         )

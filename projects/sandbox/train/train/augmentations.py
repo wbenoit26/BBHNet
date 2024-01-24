@@ -1,7 +1,6 @@
 from typing import Optional
 
 import torch
-from torchaudio.transforms import Spectrogram
 
 from ml4gw import gw
 from ml4gw.distributions import PowerLaw
@@ -201,71 +200,3 @@ class SnrSampler:
         self.dist.x_min = new
         self.dist.normalization = new ** (-self.alpha + 1)
         self.dist.normalization -= self.max_snr ** (-self.alpha + 1)
-
-
-class MultiResolutionSpectrogram(torch.nn.Module):
-    """
-    Create a single spectrogram that combines information
-    from multiple spectrograms of the same timeseries.
-    Input is expected to have the shape `(B, C, T)`,
-    where `B` is the number of batches, `C` is the number
-    of channels, and `T` is the number of time samples.
-
-    Given a list of `n_fft`s, calculate the spectrogram
-    corresponding to each and combine them by taking the
-    maximum value from each bin, which has been normalized.
-
-    If the largest number of time bins among the spectrograms
-    is `N` and the largest number of frequency bins is `M`,
-    the output will have dimensions `(B, C, M, N)`
-    """
-
-    def __init__(
-        self,
-        n_ffts: torch.Tensor,
-        sample_rate: float,
-        kernel_length: float,
-    ):
-        super().__init__()
-        self.transforms = [
-            Spectrogram(n_fft, normalized=True) for n_fft in n_ffts
-        ]
-        self.num_freqs = int(max(n_ffts // 2 + 1))
-        self.num_times = int(
-            max(kernel_length * sample_rate // (n_ffts // 2) + 1)
-        )
-
-    def forward(self, X):
-        spectrograms = [
-            (transform.to(X.device))(X) for transform in self.transforms
-        ]
-
-        time_idxs = torch.tensor(
-            [
-                [
-                    int(i * spec.shape[-1] / self.num_times)
-                    for spec in spectrograms
-                ]
-                for i in range(self.num_times)
-            ]
-        )
-        time_idxs = time_idxs.repeat(self.num_freqs, 1, 1)
-        freq_idxs = torch.tensor(
-            [
-                [
-                    int(i * spec.shape[-2] / self.num_freqs)
-                    for spec in spectrograms
-                ]
-                for i in range(self.num_freqs)
-            ]
-        )
-        freq_idxs = freq_idxs.repeat(self.num_times, 1, 1).transpose(0, 1)
-
-        stacked_specs = torch.stack(
-            [
-                spec[:, :, freq_idxs[..., i], time_idxs[..., i]]
-                for i, spec in enumerate(spectrograms)
-            ],
-            axis=-1,
-        )
-        return torch.max(stacked_specs, axis=-1)[0]

@@ -17,7 +17,7 @@ datadir = "${DATA_DIR}"
 accounting_group_user = "${LIGO_USERNAME}"
 accounting_group = "${LIGO_GROUP}"
 logdir = "${BASE_DIR}/log"
-sample_rate = 2048
+sample_rate = 4096
 kernel_length = 8
 ifos = ['H1', 'L1']
 hopeless_snr_thresh = 20
@@ -118,7 +118,7 @@ logdir = "${base.logdir}"
 outdir = "${base.basedir}/training"
 
 # optimization args
-batch_size = 384
+batch_size = 220
 max_epochs = 200
 max_lr = 0.000585
 lr_ramp_epochs = 23

@@ -400,7 +400,7 @@ def deploy(
         periodic_release="(HoldReasonCode =?= 26 || HoldReasonCode =?= 34) && (JobStatus == 5)",  # noqa
         periodic_remove="(JobStatus == 1) && MemoryUsage >= 7G",
         use_x509userproxy=True,
-        max_retries=5,
+        max_retries=25,
         **kwargs,
     )
     dag_id = condor.submit(subfile)

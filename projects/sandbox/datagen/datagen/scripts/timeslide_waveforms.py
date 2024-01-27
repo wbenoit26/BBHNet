@@ -448,7 +448,12 @@ def deploy(
     condor.watch(dag_id, condordir)
 
     # once all jobs are done, merge the output files
-    waveform_fname = writedir / "bns_waveforms.h5"
+    waveform_fname = writedir / "bns_waveforms_0.h5"
+    waveform_files = list(outdir.rglob("bns_waveforms.h5"))
+    logging.info(f"Merging output waveforms to file {waveform_fname}")
+    LigoResponseSet.aggregate(waveform_files[::2], waveform_fname, clean=True)
+
+    waveform_fname = writedir / "bns_waveforms_1.h5"
     waveform_files = list(outdir.rglob("bns_waveforms.h5"))
     logging.info(f"Merging output waveforms to file {waveform_fname}")
     LigoResponseSet.aggregate(waveform_files, waveform_fname, clean=True)

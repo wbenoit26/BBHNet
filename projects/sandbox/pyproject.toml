@@ -1,14 +1,14 @@
 [tool.pinto]
 steps = [
-    "datagen:deploy-background",
+    #"datagen:deploy-background",
     "datagen:generate-waveforms",
     "datagen:deploy-timeslide-waveforms",
     "train:train:resnet",
     "export:export-model:resnet",
     "infer:deploy-infer",
     "plots:sensitive-volume",
-    "plots:1D-param-hist",
-    "plots:2D-param-hist"
+    #"plots:1D-param-hist",
+    #"plots:2D-param-hist"
 ]
 
 [tool.typeo.base]
@@ -20,7 +20,7 @@ logdir = "${BASE_DIR}/log"
 sample_rate = 4096
 kernel_length = 8
 ifos = ['H1', 'L1']
-hopeless_snr_thresh = 20
+hopeless_snr_thresh = 15
 global_seed = 42
 
 train_start = 1240579783
@@ -229,7 +229,8 @@ waveform_approximant = "${base.waveform_approximant}"
 # paths
 model_repo_dir = "${base.repository_directory}"
 data_dir = "${base.datadir}/test/background"
-injection_set_file = "${base.datadir}/test/bns_waveforms.h5"
+injection_set_file_1 = "${base.datadir}/test/bns_waveforms_0.h5"
+injection_set_file_2 = "${base.datadir}/test/bns_waveforms_1.h5"
 output_dir = "${base.basedir}/infer"
 log_dir = "${base.logdir}"
 

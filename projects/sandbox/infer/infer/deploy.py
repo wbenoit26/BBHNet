@@ -69,7 +69,8 @@ def main(
     output_dir: Path,
     data_dir: Path,
     log_dir: Path,
-    injection_set_file: Path,
+    injection_set_file_1: Path,
+    injection_set_file_2: Path,
     image: str,
     model_name: str,
     accounting_group: str,
@@ -191,7 +192,8 @@ def main(
     --log-file {log_dir / log_pattern}
     --ip {ip}
     --model-name {model_name}
-    --injection-set-file {injection_set_file}
+    --injection-set-file-1 {injection_set_file_1}
+    --injection-set-file-2 {injection_set_file_2}
     --sample-rate {sample_rate}
     --inference-sampling-rate {inference_sampling_rate}
     --ifos {" ".join(ifos)}

@@ -25,7 +25,8 @@ def infer_on_segment(
     start: float,
     end: float,
     shifts: List[float],
-    injection_set_file: Path,
+    injection_set_file_1: Path,
+    injection_set_file_2: Path,
     batch_size: int,
     inference_sampling_rate: float,
     sample_rate: float,
@@ -92,9 +93,15 @@ def infer_on_segment(
     num_steps = callback.initialize(start, end)
 
     # load the waveforms specific to this segment/shift
-    logging.debug(f"Loading injection set {injection_set_file}")
+    logging.debug(f"Loading injection set {injection_set_file_1}")
     injection_set = LigoResponseSet.read(
-        injection_set_file, start=start, end=end, shifts=shifts
+        injection_set_file_1, start=start, end=end, shifts=shifts
+    )
+    logging.debug(f"Loading injection set {injection_set_file_2}")
+    injection_set.append(
+        LigoResponseSet.read(
+            injection_set_file_2, start=start, end=end, shifts=shifts
+        )
     )
 
     # map the injection of these waveforms
@@ -164,7 +171,8 @@ def main(
     model_name: str,
     data_dir: Path,
     output_dir: Path,
-    injection_set_file: Path,
+    injection_set_file_1: Path,
+    injection_set_file_2: Path,
     sample_rate: float,
     inference_sampling_rate: float,
     shifts: List[float],
@@ -295,7 +303,8 @@ def main(
                 start=start,
                 end=end,
                 shifts=shifts,
-                injection_set_file=injection_set_file,
+                injection_set_file_1=injection_set_file_1,
+                injection_set_file_2=injection_set_file_2,
                 batch_size=batch_size,
                 inference_sampling_rate=inference_sampling_rate,
                 sample_rate=sample_rate,

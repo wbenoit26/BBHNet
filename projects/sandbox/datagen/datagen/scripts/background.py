@@ -222,7 +222,7 @@ def main(
     # remove once https://github.com/gwpy/gwpy/pull/1665
     # has been merged, and we have updated gwpy to relevant version
     try:
-        data = fetch_timeseries(channels, start, stop)
+        data = fetch_timeseries(channels, start, stop, sample_rate=16384)
     except ValueError as e:
         # only catch ValueError if it's due to above issue
         # otherwise raise the error as normal and have
@@ -235,6 +235,7 @@ def main(
         else:
             raise e
     data = data.resample(sample_rate)
+    data = data.crop(start + 8, stop - 8)
     for ifo, channel in zip(ifos, channels):
         data[ifo] = data.pop(channel)
 

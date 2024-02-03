@@ -235,7 +235,6 @@ def main(
         else:
             raise e
     data = data.resample(sample_rate)
-    data = data.crop(start + 8, stop - 8)
     for ifo, channel in zip(ifos, channels):
         data[ifo] = data.pop(channel)
 

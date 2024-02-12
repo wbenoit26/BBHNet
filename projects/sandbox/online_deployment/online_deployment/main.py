@@ -118,6 +118,7 @@ def main(
         if trigger_distance > 0:
             time_offset -= kernel_length - trigger_distance
         if trigger_distance < 0:
+            # Trigger distance parameter accounts for fduration already
             time_offset -= np.abs(trigger_distance) - fduration / 2
 
     logging.info("Beginning search")
@@ -146,7 +147,7 @@ def main(
                     integrated[-1], t0 - 1, len(integrated) - 1
                 )
                 trigger = get_trigger(event)
-                trigger.submit(event, ifos, datadir)
+                trigger.submit(event, ifos, datadir, ifo_suffix)
                 searcher.detecting = False
                 last_event_written = False
                 last_event_trigger = trigger
@@ -199,7 +200,7 @@ def main(
 
         if event is not None:
             trigger = get_trigger(event)
-            trigger.submit(event, ifos, datadir)
+            trigger.submit(event, ifos, datadir, ifo_suffix)
             last_event_written = False
             last_event_trigger = trigger
             last_event_time = event.gpstime

@@ -22,13 +22,26 @@ def gps_from_timestamp(timestamp: float):
     return float(tconvert(datetime.fromtimestamp(timestamp, tz=timezone.utc)))
 
 
-def get_frame_write_time(gpstime: float, datadir: Path, ifos: List[str]):
+def get_frame_write_time(
+    gpstime: float,
+    datadir: Path,
+    ifos: List[str],
+    ifo_suffix: str = None,
+):
     t_write = 0
-    prefix, length, _ = get_prefix(datadir / ifos[0])
-    middle = prefix.split("_")[1]
+    if ifo_suffix is not None:
+        ifo_dir = "_".join([ifos[0], ifo_suffix])
+    else:
+        ifo_dir = ifos[0]
+    prefix, length, _ = get_prefix(datadir / ifo_dir)
+    middle = "_".join(prefix.split("_")[1:])
     for ifo in ifos:
+        if ifo_suffix is not None:
+            ifo_dir = "_".join([ifo, ifo_suffix])
+        else:
+            ifo_dir = ifo
         prefix = f"{ifo[0]}-{ifo}_{middle}"
-        fname = datadir / ifo / f"{prefix}-{int(gpstime)}-{length}.gwf"
+        fname = datadir / ifo_dir / f"{prefix}-{int(gpstime)}-{length}.gwf"
         t_write = max(t_write, os.path.getmtime(fname))
 
     return gps_from_timestamp(t_write)
@@ -180,7 +193,13 @@ class Trigger:
     def __post_init__(self):
         self.write_dir.mkdir(exist_ok=True, parents=True)
 
-    def submit(self, event: Event, ifos: List[str], datadir: Path):
+    def submit(
+        self,
+        event: Event,
+        ifos: List[str],
+        datadir: Path,
+        ifo_suffix: str = None,
+    ):
         gpstime = event.gpstime
         event_dir = self.write_dir / f"event_{int(gpstime)}"
         event_dir.mkdir(exist_ok=True, parents=True)
@@ -201,7 +220,7 @@ class Trigger:
             search="AllSky",
         )
         submission_time = float(tconvert(datetime.now(tz=timezone.utc)))
-        t_write = get_frame_write_time(gpstime, datadir, ifos)
+        t_write = get_frame_write_time(gpstime, datadir, ifos, ifo_suffix)
         # Time to submit since event occured and since the file was written
         total_latency = submission_time - gpstime
         write_latency = t_write - gpstime

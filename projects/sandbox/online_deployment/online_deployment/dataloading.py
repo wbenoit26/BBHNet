@@ -86,9 +86,9 @@ def reset_t0(datadir, last_t0):
     while True:
         matches = [fname_re.search(i.name) for i in datadir.iterdir()]
         t0s = np.array([int(i.group("start")) for i in matches if _is_gwf(i)])
-        t0s = t0s[t0s > last_t0]
+        # t0s = t0s[t0s > last_t0]
         if t0s.size > 0:
-            t0 = min(t0s)
+            t0 = max(t0s)
             logging.info(f"Resetting timestamp to {t0}")
             return t0
 

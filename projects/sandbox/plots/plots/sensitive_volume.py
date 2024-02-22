@@ -217,6 +217,5 @@ def main(
     export_svg(grid, filename=output_dir / "sensitive-volume.svg")
 
 
-
 if __name__ == "__main__":
     main()

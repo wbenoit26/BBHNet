@@ -1,15 +1,16 @@
 [tool.pinto]
 steps = [
-    #"data_gen:launch-datagen",
+    "data_gen:launch-datagen",
     #"training:launch-training",
     #"exporting:launch-export:resnet",
-    "inference:launch-inference",
+    #"inference:launch-inference",
 ]
 
 
 [tool.typeo.base]
 Tb = 5184000  # 60 days of background
 shifts = [0, 1]
+global_seed = 42
 
 inference_psd_length = 64
 training_psd_length = 8
@@ -26,13 +27,14 @@ resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
 
 [tool.typeo.scripts.launch-datagen]
 basedir = "${base.basedir}"
-
+seed = "${base.global_seed}"
 test_stop = 1244035783
-intervals = [1, 2, 4, 12, 24, 32] # number of weeks
+intervals = [1, 2, 4, 12, 24, 32, 40] # number of weeks
 channel = "OPEN"
 sample_rate = "${base.sample_rate}"
 ifos = "${base.ifos}"
 state_flag = "DATA"
+
 min_segment_length = 1024
 max_segment_length = 20000
 duration = 604800 # one week of data
@@ -60,6 +62,7 @@ verbose = true
 [tool.typeo.scripts.launch-training]
 basedir = "${base.basedir}"
 gpus = [0, 1, 2, 3, 4, 5, 6, 7]
+seed = "${base.global_seed}"
 
 [tool.typeo.scripts.train]
 
@@ -124,7 +127,7 @@ psd_length = "${base.inference_psd_length}"
 
 # repo/triton parameters
 aframe_instances = 6
-streams_per_gpu = 3 
+streams_per_gpu = 3
 platform = "tensorrt_plan"
 verbose = false
 clean = true
@@ -135,7 +138,7 @@ commands.resnet = "${base.resnet}"
 
 [tool.typeo.scripts.launch-inference]
 basedir = "${base.basedir}"
-original_model_repo_dir = "/home/ethan.marx/aframe/paper/best_o3_model/iteration_1/model_repo/"
+original_model_repo_dir = "/home/ethan.marx/aframe/methods-paper-main-run/model_repo" 
 image = "hermes/tritonserver:22.12"
 model_name = "aframe-stream"
 
@@ -156,3 +159,8 @@ chunk_size = 4096
 sequence_id = 1001
 
 verbose = true
+
+[tool.typeo.scripts.deploy-sv-over-time]
+basedir = "${base.basedir}"
+accounting_group_user = "${LIGO_USERNAME}"
+accounting_group = "${LIGO_GROUP}"

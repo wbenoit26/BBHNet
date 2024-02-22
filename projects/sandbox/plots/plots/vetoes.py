@@ -8,6 +8,7 @@ from gwpy.segments import DataQualityDict
 
 # TODO: gating should really be applied directly to the strain
 
+
 CATEGORIES = ["CAT1", "CAT2", "CAT3", "GATES"]
 
 
@@ -17,12 +18,14 @@ def gates_to_veto_segments(path: Path):
     centers = gates[:, 0]
     windows = gates[:, 1]
     tapers = gates[:, 2] + 0.375
+
     vetoes = np.array(
         [
             [center - window - taper, center + window + taper]
             for center, window, taper in zip(centers, windows, tapers)
         ]
     )
+
     return vetoes
 
 

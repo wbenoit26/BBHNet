@@ -1,0 +1,8 @@
+name: aframe-plots
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - selenium 
+  - geckodriver
+  - firefox

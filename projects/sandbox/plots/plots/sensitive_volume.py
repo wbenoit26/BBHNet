@@ -5,7 +5,7 @@ from typing import Optional
 import h5py
 import numpy as np
 from astropy.cosmology import Planck15 as cosmology
-from bokeh.io import save
+from bokeh.io import export_svg, save
 from bokeh.layouts import gridplot
 from plots import compute, utils
 from plots.gwtc3 import catalog_results
@@ -56,6 +56,7 @@ def main(
     sigma: float = 0.1,
     verbose: bool = False,
 ):
+    output_dir.mkdir(exist_ok=True, parents=True)
     configure_logging(log_file, verbose)
 
     logging.info("Reading in inference outputs")
@@ -155,6 +156,7 @@ def main(
 
     with h5py.File(output_dir / "sensitive-volume.h5", "w") as f:
         f.create_dataset("thresholds", data=thresholds)
+        f.create_dataset("fars", data=x)
         for i, combo in enumerate(mass_combos):
             g = f.create_group("-".join(map(str, combo)))
             g.create_dataset("sv", data=y[i])
@@ -211,7 +213,8 @@ def main(
                 p.legend.title_text_font_style = "bold"
 
     grid = gridplot(plots, toolbar_location="right", ncols=2)
-    save(grid, filename=output_dir / "sensitive_volume.html")
+    save(grid, filename=output_dir / "sensitive-volume.html")
+    export_svg(grid, filename=output_dir / "sensitive-volume.svg")
 
 
 if __name__ == "__main__":

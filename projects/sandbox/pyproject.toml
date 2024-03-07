@@ -1,15 +1,14 @@
 [tool.pinto]
 steps = [
-    #"datagen:deploy-background",
-    "datagen:generate-glitches"
-    #"datagen:generate-waveforms",
-    #"datagen:deploy-timeslide-waveforms",
-    #"train:train:resnet",
-    #"export:export-model:resnet",
-    #"infer:deploy-infer",
-    #"plots:sensitive-volume",
-    #"plots:1D-param-hist",
-    #"plots:2D-param-hist"
+    "datagen:deploy-background",
+    "datagen:generate-waveforms",
+    "datagen:deploy-timeslide-waveforms",
+    "train:train:resnet",
+    "export:export-model:resnet",
+    "infer:deploy-infer",
+    "plots:sensitive-volume",
+    "plots:1D-param-hist",
+    "plots:2D-param-hist"
 ]
 
 [tool.typeo.base]
@@ -36,9 +35,11 @@ repository_directory = "${BASE_DIR}/model_repo/"
 force_generation = false
 Tb = 31536000  # 1 year of background
 inference_sampling_rate = 4
+integration_window_length = 1
 inference_batch_size = 128
 inference_psd_length = 64
 training_psd_length = 8
+trigger_distance = -0.75
 
 waveform_duration = 8
 reference_frequency = 50
@@ -151,7 +152,7 @@ highpass = "${base.highpass}"
 psd_length = "${base.training_psd_length}"
 
 # augmentation args
-trigger_distance = -0.75
+trigger_distance = "${base.trigger_distance}"
 waveform_prob = 0.277
 swap_frac = 0.014
 mute_frac = 0.055
@@ -262,7 +263,7 @@ ifos = "${base.ifos}"
 chunk_size = 4096
 
 # analysis args
-integration_window_length = 1
+integration_window_length = "${base.integration_window_length}"
 cluster_window_length = 8
 fduration = "${base.fduration}"
 psd_length = "${base.inference_psd_length}"
@@ -293,3 +294,24 @@ rejected_params = "${base.basedir}/test/rejected-parameters.h5"
 output_fname = "${base.basedir}/infer/2D_param_hist.html"
 log_file = "${base.basedir}/log/2D_param_hist.log"
 verbose = "${base.verbose}"
+
+[tool.typeo.scripts.online-deployment]
+outdir = "${base.basedir}"
+datadir = "/dev/shm/kafka"
+ifos = "${base.ifos}"
+channel = "GDS-CALIB_STRAIN_INJ1_O3Replay"
+sample_rate = "${base.sample_rate}"
+kernel_length = "${base.kernel_length}"
+inference_sampling_rate = 512
+psd_length = "${base.inference_psd_length}"
+trigger_distance = "${base.trigger_distance}"
+fduration = "${base.fduration}"
+integration_window_length = "${base.integration_window_length}"
+highpass = "${base.highpass}"
+far_per_day = 1
+secondary_far_threshold = 24
+server = "playground"
+ifo_suffix = "O3ReplayMDC"
+verbose = false
+
+commands.resnet = "${base.resnet}"

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "multi_rate_plots"
+version = "0.1.0"
+description = "Make plots showing results at different inference rates"
+authors = ["Will Benoit <benoi090@umn.edu>"]
+license = "MIT"
+
+[tool.poetry.scripts]
+sensitive-volumes = "multi_rate_plots.sensitive_volumes:main"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+plots = {path = "../../sandbox/plots", develop = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -451,7 +451,7 @@ def deploy(
     waveform_fname = writedir / "bns_waveforms.h5"
     waveform_files = list(outdir.rglob("bns_waveforms.h5"))
     logging.info(f"Merging output waveforms to file {waveform_fname}")
-    LigoResponseSet.aggregate(waveform_files[::2], waveform_fname, clean=True)
+    LigoResponseSet.aggregate(waveform_files, waveform_fname, clean=True)
 
     params_fname = writedir / "bns-rejected-parameters.h5"
     param_files = list(outdir.rglob("bns-rejected-parameters.h5"))

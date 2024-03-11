@@ -91,7 +91,7 @@ class AframeBatchAugmentor(torch.nn.Module):
         phi: Callable,
         psd_estimator: Callable,
         whitener: Callable,
-        spectrogram: Callable,
+        qtransform: Callable,
         trigger_distance: float,
         mute_frac: float = 0.0,
         swap_frac: float = 0.0,
@@ -129,7 +129,7 @@ class AframeBatchAugmentor(torch.nn.Module):
         self.rescaler = rescaler
         self.psd_estimator = psd_estimator
         self.whitener = whitener
-        self.spectrogram = spectrogram
+        self.qtransform = qtransform
 
         # store ifo geometries
         tensors, vertices = gw.get_ifo_geometry(*ifos)
@@ -162,7 +162,11 @@ class AframeBatchAugmentor(torch.nn.Module):
         Sample sky location parameters, compute interferometer responses,
         and perform SNR rescaling
         """
-        dec, psi, phi = self.dec(N), self.psi(N), self.phi(N)
+        dec, psi, phi = (
+            self.dec.sample((N,)),
+            self.psi.sample((N,)),
+            self.phi.sample((N,)),
+        )
         dec, psi, phi = (
             dec.to(self.tensors.device),
             psi.to(self.tensors.device),
@@ -239,7 +243,7 @@ class AframeBatchAugmentor(torch.nn.Module):
         if self.snr is not None:
             self.snr.step()
 
-        X = self.spectrogram(X)
+        X = self.qtransform(X, 64, 128)
 
         return X, y
 

@@ -186,7 +186,7 @@ class SnrSampler:
         self.dist = PowerLaw(max_min_snr, max_snr, alpha)
 
     def __call__(self, N):
-        return self.dist(N)
+        return self.dist.sample((N,))
 
     def step(self):
         self._step += 1
@@ -197,6 +197,4 @@ class SnrSampler:
         diff = self.max_min_snr - self.min_min_snr
         new = self.max_min_snr - frac * diff
 
-        self.dist.x_min = new
-        self.dist.normalization = new ** (-self.alpha + 1)
-        self.dist.normalization -= self.max_snr ** (-self.alpha + 1)
+        self.dist = PowerLaw(new, self.max_snr, self.alpha)

@@ -217,7 +217,7 @@ class Validator:
     waveforms: torch.Tensor
     psd_estimator: Callable
     whitener: Callable
-    spectrogram: Callable
+    qtransform: Callable
     sample_rate: float
     stride: float
     injection_stride: float
@@ -377,7 +377,7 @@ class Validator:
     def predict(self, model, X, psd):
         """Whiten the given data and pass it through the model"""
         X = self.whitener(X, psd)
-        X = self.spectrogram(X)
+        X = self.qtransform(X, 64, 128)
         return model(X)[:, 0]
 
     @torch.no_grad()

@@ -4,20 +4,18 @@ from pathlib import Path
 from typing import List, Optional
 
 import torch
+from torch.distributions.uniform import Uniform
 from train import utils as train_utils
 from train import validation as valid_utils
 from train.augmentations import SnrRescaler, SnrSampler
 from train.augmentor import AframeBatchAugmentor, AugmentedDataset
 
-from aframe.architectures.preprocessor import (
-    MultiResolutionSpectrogram,
-    PsdEstimator,
-)
+from aframe.architectures.preprocessor import PsdEstimator
 from aframe.logging import configure_logging
 from aframe.trainer import trainify
 from ml4gw.dataloading import Hdf5TimeSeriesDataset
-from ml4gw.distributions import Cosine, Uniform
-from ml4gw.transforms import Whiten
+from ml4gw.distributions import Cosine
+from ml4gw.transforms import SingleQTransform, Whiten
 
 
 # note that this function decorator acts both to
@@ -48,7 +46,6 @@ def main(
     psd_length: float,
     fduration: float,
     highpass: float,
-    n_ffts: List[int],
     fftlength: Optional[float] = None,
     # augmentation args
     waveform_prob: float = 0.5,
@@ -244,9 +241,12 @@ def main(
         window_length, sample_rate, fftlength, fast=fast, average="median"
     )
     whitener = Whiten(fduration, sample_rate, highpass).to(device)
-    spectrogram = MultiResolutionSpectrogram(
-        kernel_length, sample_rate, n_fft=n_ffts
-    )
+    qtransform = SingleQTransform(
+        duration=kernel_length,
+        sample_rate=sample_rate,
+        q=45.26,
+        frange=[highpass, torch.inf],
+    ).to(device)
 
     # load the waveforms
     waveforms, valid_waveforms = train_utils.get_waveforms(
@@ -278,7 +278,7 @@ def main(
             valid_waveforms,
             psd_estimator=psd_estimator,
             whitener=whitener,
-            spectrogram=spectrogram,
+            qtransform=qtransform,
             snr_thresh=snr_thresh,
             highpass=highpass,
             sample_rate=sample_rate,
@@ -322,7 +322,7 @@ def main(
         phi=Uniform(-pi, pi),
         psd_estimator=psd_estimator,
         whitener=whitener,
-        spectrogram=spectrogram,
+        qtransform=qtransform,
         trigger_distance=trigger_distance,
         mute_frac=mute_frac,
         swap_frac=swap_frac,

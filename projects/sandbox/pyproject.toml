@@ -23,18 +23,18 @@ ifos = ['H1', 'L1']
 hopeless_snr_thresh = 10
 global_seed = 42
 
-train_start = 1240579783
-train_stop = 1241443783  # 10 day train window
-test_stop = 1244035783 # 30 day test window
+train_start = 1366934418
+train_stop = 1385424018
+test_stop = 1390780818
 
-channel = "OPEN"
-frame_type = "HOFT_C01"
-state_flag = "DATA" # open data segments
+channel = "GDS-CALIB_STRAIN"
+frame_type = "HOFT_CLEAN_SUB60HZ_C01"
+state_flag = "DMT-ANALYSIS_READY" # open data segments
 resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
 resnet2d = {layers = [3, 4, 6, 3], norm_groups = 16}
 repository_directory = "${BASE_DIR}/model_repo/" 
 force_generation = false
-Tb = 5184000 #31536000  # 1 year of background
+Tb = 31536000  # 1 year of background
 inference_sampling_rate = 4
 inference_batch_size = 128
 inference_psd_length = 64

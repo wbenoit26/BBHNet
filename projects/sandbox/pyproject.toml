@@ -23,13 +23,13 @@ ifos = ['H1', 'L1']
 hopeless_snr_thresh = 4
 global_seed = 42
 
-train_start = 1240579783
-train_stop = 1241443783  # 10 day train window
-test_stop = 1244035783 # 30 day test window
+train_start = 1366934418
+train_stop = 1385424018
+test_stop = 1390780818
 
-channel = "OPEN"
+channel = "GDS-CALIB_STRAIN"
 frame_type = "HOFT_CLEAN_SUB60HZ_C01" # corresponds to open data channel
-state_flag = "DATA" # open data segments
+state_flag = "DMT-ANALYSIS_READY" # open data segments
 resnet = {layers = [3, 4, 6, 3], norm_groups = 16}
 repository_directory = "${BASE_DIR}/model_repo/" 
 force_generation = false

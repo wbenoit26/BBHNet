@@ -118,7 +118,7 @@ outdir = "${base.basedir}/training"
 
 # optimization args
 batch_size = 576
-max_epochs = 200
+max_epochs = 300
 max_lr = 0.000585
 lr_ramp_epochs = 23
 weight_decay = 0.0
@@ -216,7 +216,7 @@ prior = "${base.testing_prior}"
 minimum_frequency = "${base.minimum_frequency}"
 reference_frequency = "${base.reference_frequency}"
 highpass = "${base.highpass}"
-spacing = 16
+spacing = 384
 buffer = 16
 snr_threshold = 10
 waveform_duration = "${base.waveform_duration}"

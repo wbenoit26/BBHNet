@@ -3,6 +3,7 @@ from typing import Optional
 import torch
 
 from aframe.architectures import BackgroundSnapshotter, BatchWhitener
+from ml4gw.transforms import SingleQTransform
 
 
 class SnapshotWhitener(torch.nn.Module):
@@ -42,6 +43,13 @@ class SnapshotWhitener(torch.nn.Module):
             highpass=highpass,
         ).to("cuda")
 
+        self.qtransform = SingleQTransform(
+            duration=kernel_length,
+            sample_rate=sample_rate,
+            q=45.26,
+            frange=[highpass, torch.inf],
+        ).to("cuda")
+
         self.step_size = int(sample_rate / inference_sampling_rate)
         self.kernel_size = int(kernel_length * sample_rate)
         self.psd_size = int(psd_length * sample_rate)
@@ -73,4 +81,5 @@ class SnapshotWhitener(torch.nn.Module):
         )
         if not full_psd_present:
             self.contiguous_update_size += update.shape[-1]
-        return self.batch_whitener(X), current_state, full_psd_present
+        X = self.batch_whitener(X)
+        return self.qtransform(X, 64, 128), current_state, full_psd_present

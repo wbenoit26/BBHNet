@@ -4,9 +4,11 @@ from collections.abc import Callable
 import torch
 
 from aframe.architectures.resnet import BottleneckResNet, ResNet
+from aframe.architectures.resnet2d import ResNet as ResNet2D
 
 architectures = {
     "resnet": ResNet,
+    "resnet2d": ResNet2D,
     "bottleneck": BottleneckResNet,
 }
 

@@ -1,4 +1,4 @@
-name: aframe-online-deployment
+name: aframe-online-deployment-bns
 channels:
   - conda-forge
 dependencies:

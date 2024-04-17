@@ -7,3 +7,6 @@
 [submodule "mldatafind"]
 	path = mldatafind
 	url = git@github.com:ML4GW/mldatafind.git
+[submodule "projects/sandbox/PE"]
+	path = projects/sandbox/PE
+	url = git@github.com:deepchatterjeeligo/PE.git

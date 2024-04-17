@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from ml4gw.spectral import spectral_density
+import lal
 import numpy as np
 import torch
 from online_deployment.buffer import DataBuffer
@@ -11,7 +11,9 @@ from online_deployment.dataloading import data_iterator
 from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
 from online_deployment.parameter_estimation import (
+    cast_samples_as_bilby_result,
     get_data_for_pe,
+    plot_mollview,
     submit_pe,
 )
 
@@ -176,7 +178,19 @@ def main(
                 psd_data, pe_data = get_data_for_pe(last_event_time, buffer.input_buffer, fduration)
                 pe_psd = spectral_density(psd_data)
                 whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
-                pe_outputs = amplfi(whitened_pe_data)
+                res = amplfi.sample(20000, context=whitened_pe_data)
+                res_s190513bm = cast_samples_as_bilby_result(
+                    res[...,:3].numpy(), ['chirp_mass', 'mass_ratio', 'luminosity_distance'],
+                    "S190513bm HLV result"
+                )
+                mollview_plot = plot_mollview(
+                    torch.remainder(
+                        lal.GreenwichMeanSiderealTime(last_event_time) + descaled_samples[...,7],
+                        torch.as_tensor(2*torch.pi)
+                    ) - torch.pi + vis_shift,
+                    descaled_samples[...,5] + torch.pi/2,
+                    title="HL Model"
+                )
                 submit_pe(pe_outputs)
 
             # check if this is because the frame stream stopped

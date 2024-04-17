@@ -1,8 +1,9 @@
-name: aframe-online-deployment
+name: aframe-online-deployment-amplfi
 channels:
   - conda-forge
 dependencies:
   - python=3.9
+  - lalinference
   - libgcc
   # frame file I/O depconendencies
   - python-ldas-tools-framecpp<3.0.0

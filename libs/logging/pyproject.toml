@@ -14,4 +14,4 @@ python = ">=3.8,<3.11"
 
 [build-system]
 requires = ["poetry>=1.1"]
-build-backend = "poetry.masonry.api"
+build-backend = "poetry.core.masonry.api"

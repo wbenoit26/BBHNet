@@ -3,16 +3,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, List, Optional
 
+from ml4gw.spectral import spectral_density
 import numpy as np
 import torch
 from online_deployment.buffer import DataBuffer
 from online_deployment.dataloading import data_iterator
 from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
+from online_deployment.parameter_estimation import (
+    get_data_for_pe,
+    submit_pe,
+)
 
 from aframe.architectures import architecturize
 from aframe.logging import configure_logging
 
+from ml4gw.transforms import SpectralDensity, Whiten
 
 @architecturize
 @torch.no_grad()
@@ -60,7 +66,8 @@ def main(
     weights_path = outdir / "training" / "weights.pt"
     logging.info(f"Build network and loading weights from {weights_path}")
 
-    nn = architecture(num_ifos).to("cuda")
+    # Aframe setup
+    aframe = architecture(num_ifos).to("cuda")
     fftlength = fftlength or kernel_length + fduration
     whitener = SnapshotWhitener(
         num_channels=num_ifos,
@@ -75,8 +82,21 @@ def main(
     current_state = whitener.get_initial_state().to("cuda")
 
     weights = torch.load(weights_path)
-    nn.load_state_dict(weights)
-    nn.eval()
+    aframe.load_state_dict(weights)
+    aframe.eval()
+
+    # Amplfi setup
+    spectral_density = SpectralDensity(
+        sample_rate=sample_rate,
+        fftlength=fftlength,
+        average="median",
+    ).to("cuda")
+    pe_whitener = Whiten(
+        fduration=fduration,
+        sample_rate=sample_rate,
+        highpass=highpass
+    ).to("cuda")
+    amplfi = None
 
     # set up some objects to use for finding
     # and submitting triggers
@@ -153,6 +173,11 @@ def main(
                 last_event_written = False
                 last_event_trigger = trigger
                 last_event_time = event.gpstime
+                psd_data, pe_data = get_data_for_pe(last_event_time, buffer.input_buffer, fduration)
+                pe_psd = spectral_density(psd_data)
+                whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
+                pe_outputs = amplfi(whitened_pe_data)
+                submit_pe(pe_outputs)
 
             # check if this is because the frame stream stopped
             # being analysis ready, or if it's because frames
@@ -184,7 +209,7 @@ def main(
 
         X = X.to("cuda")
         batch, current_state, full_psd_present = whitener(X, current_state)
-        y = nn(batch)[:, 0]
+        y = aframe(batch)[:, 0]
         integrated = buffer.update(
             input_update=X,
             output_update=y,
@@ -205,6 +230,11 @@ def main(
             last_event_written = False
             last_event_trigger = trigger
             last_event_time = event.gpstime
+            psd_data, pe_data = get_data_for_pe(last_event_time, buffer.input_buffer, fduration)
+            pe_psd = spectral_density(psd_data)
+            whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
+            pe_outputs = amplfi(whitened_pe_data)
+            submit_pe(pe_outputs)
 
         if (
             not last_event_written

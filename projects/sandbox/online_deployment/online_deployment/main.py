@@ -95,7 +95,8 @@ def main(
 
     def get_trigger(event):
         fars_hz = [i / 3600 / 24 for i in fars]
-        idx = np.digitize(event.far, fars_hz)
+        # trial factor
+        idx = np.digitize(event.far / 2, fars_hz)
         if idx == 0 and not in_spec:
             logging.warning(
                 "Not submitting event {} to production trigger "

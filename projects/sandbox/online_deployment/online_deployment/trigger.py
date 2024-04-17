@@ -118,6 +118,7 @@ class Searcher:
         timestamp = t0 + idx / self.inference_sampling_rate
         far = max(self.background.far(value), self.min_far)
         far /= SECONDS_PER_YEAR
+        far *= 2 # trials factor
 
         logging.info(
             "Event coalescence time found to be {:0.3f} "

@@ -173,7 +173,7 @@ class Searcher:
 class LocalGdb:
     def createEvent(self, filename: str, **_):
         return filename
-    
+
     def writeLog(self, filename: str, **_):
         return filename
 
@@ -245,4 +245,6 @@ class Trigger:
 
         mollview_fname = self.write_dir / "mollview_plot.png"
         mollview_plot.savefig(mollview_fname, dpi=300)
-        self.gdb.writeLog(graceid, "Mollview projection", filename=mollview_fname)
+        self.gdb.writeLog(
+            graceid, "Mollview projection", filename=mollview_fname
+        )

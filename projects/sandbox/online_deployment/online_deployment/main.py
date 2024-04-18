@@ -7,17 +7,14 @@ import numpy as np
 import torch
 from online_deployment.buffer import DataBuffer
 from online_deployment.dataloading import data_iterator
+from online_deployment.parameter_estimation import run_amplfi, set_up_amplfi
 from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
-from online_deployment.parameter_estimation import (
-    run_amplfi,
-    set_up_amplfi,
-)
 
 from aframe.architectures import architecturize
 from aframe.logging import configure_logging
-
 from ml4gw.transforms import SpectralDensity, Whiten
+
 
 @architecturize
 @torch.no_grad()
@@ -91,9 +88,7 @@ def main(
         average="median",
     ).to("cuda")
     pe_whitener = Whiten(
-        fduration=fduration,
-        sample_rate=sample_rate,
-        highpass=highpass
+        fduration=fduration, sample_rate=sample_rate, highpass=highpass
     ).to("cuda")
     amplfi, std_scaler = set_up_amplfi()
 
@@ -173,13 +168,13 @@ def main(
                 last_event_trigger = trigger
                 last_event_time = event.gpstime
                 bilby_res, mollview_plot = run_amplfi(
-                    last_event_time, 
-                    buffer.input_buffer, 
+                    last_event_time,
+                    buffer.input_buffer,
                     fduration,
                     spectral_density,
                     pe_whitener,
                     amplfi,
-                    std_scaler
+                    std_scaler,
                 )
                 graceid = response.json()["graceid"]
                 trigger.submit_pe(bilby_res, mollview_plot, graceid)
@@ -236,13 +231,13 @@ def main(
             last_event_trigger = trigger
             last_event_time = event.gpstime
             bilby_res, mollview_plot = run_amplfi(
-                last_event_time, 
-                buffer.input_buffer, 
+                last_event_time,
+                buffer.input_buffer,
                 fduration,
                 spectral_density,
                 pe_whitener,
                 amplfi,
-                std_scaler
+                std_scaler,
             )
             graceid = response.json()["graceid"]
             trigger.submit_pe(bilby_res, mollview_plot, graceid)

@@ -1,21 +1,18 @@
-import numpy as np
-import healpy as hp
 import bilby
-import pandas as pd
-import torch
+import healpy as hp
 import lal
 import matplotlib.pyplot as plt
-
-from ml4gw.transforms import scaler
+import numpy as np
+import pandas as pd
+import torch
 from mlpe.architectures import MaskedAutoRegressiveFlow, ResNet
 from mlpe.injection import nonspin_bbh_chirp_mass_q_parameter_sampler
 
+from ml4gw.transforms import scaler
+
+
 def get_data_for_pe(
-    event_time,
-    input_buffer,
-    fduration,
-    pe_window=4,
-    event_position=3
+    event_time, input_buffer, fduration, pe_window=4, event_position=3
 ):
     buffer_start = input_buffer.t0
     sample_rate = input_buffer.sample_rate
@@ -26,35 +23,41 @@ def get_data_for_pe(
     window_end = int(window_start + (pe_window + fduration / 2) * sample_rate)
 
     psd_data = data[:, :window_start]
-    pe_data = data[:, window_start : window_end]
+    pe_data = data[:, window_start:window_end]
 
     return psd_data, pe_data
 
+
 def run_amplfi(
-    last_event_time, 
-    input_buffer, 
+    last_event_time,
+    input_buffer,
     fduration,
     spectral_density,
     pe_whitener,
     amplfi,
     std_scaler,
 ):
-    psd_data, pe_data = get_data_for_pe(last_event_time, input_buffer, fduration)
+    psd_data, pe_data = get_data_for_pe(
+        last_event_time, input_buffer, fduration
+    )
     pe_psd = spectral_density(psd_data)
     whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
     res = amplfi.sample(20000, context=whitened_pe_data)
     descaled_samples = std_scaler(res.mT, reverse=True).mT.cpu()
     bilby_res = cast_samples_as_bilby_result(
-        descaled_samples[...,:3].numpy(), ['chirp_mass', 'mass_ratio', 'luminosity_distance'],
-        f"{last_event_time} result"
+        descaled_samples[..., :3].numpy(),
+        ["chirp_mass", "mass_ratio", "luminosity_distance"],
+        f"{last_event_time} result",
     )
     mollview_plot = plot_mollview(
         torch.remainder(
-            lal.GreenwichMeanSiderealTime(last_event_time) + descaled_samples[...,7],
-            torch.as_tensor(2 * torch.pi)
-        ) - torch.pi,
-        descaled_samples[...,5] + torch.pi / 2,
-        title=f"{last_event_time} sky map"
+            lal.GreenwichMeanSiderealTime(last_event_time)
+            + descaled_samples[..., 7],
+            torch.as_tensor(2 * torch.pi),
+        )
+        - torch.pi,
+        descaled_samples[..., 5] + torch.pi / 2,
+        title=f"{last_event_time} sky map",
     )
     return bilby_res, mollview_plot
 
@@ -75,12 +78,13 @@ def cast_samples_as_bilby_result(
         search_parameter_keys=inference_params,
     )
 
+
 def plot_mollview(
     ra_samples: np.ndarray,
     dec_samples: np.ndarray,
     nside: int = 32,
-    fig = None,
-    title = None,
+    fig=None,
+    title=None,
 ):
     # mask out non physical samples;
     ra_samples_mask = (ra_samples > -np.pi) * (ra_samples < np.pi)
@@ -103,6 +107,7 @@ def plot_mollview(
     fig = plt.figure()
     hp.mollview(m, fig=fig, title=title, hold=True)
     return fig
+
 
 def set_up_amplfi():
     resnet_context_dim = 20
@@ -139,15 +144,19 @@ def set_up_amplfi():
         prior_func,
         num_transforms=num_transforms,
         num_blocks=num_blocks,
-        hidden_features=hidden_features
+        hidden_features=hidden_features,
     ).to("cuda")
 
-    weights = torch.load("/home/william.benoit/amplfi_models/amplfi-2-det.ckpt")["state_dict"]
+    weights = torch.load(
+        "/home/william.benoit/amplfi_models/amplfi-2-det.ckpt"
+    )["state_dict"]
     flow_obj.load_state_dict(weights)
     flow_obj.eval()
 
     std_scaler = scaler.ChannelWiseScaler(8).to("cuda")
-    scaler_ckpt = torch.load('/home/william.benoit/amplfi_models/standard-scaler.pth')
+    scaler_ckpt = torch.load(
+        "/home/william.benoit/amplfi_models/standard-scaler.pth"
+    )
     std_scaler.load_state_dict(scaler_ckpt)
     std_scaler.eval()
 

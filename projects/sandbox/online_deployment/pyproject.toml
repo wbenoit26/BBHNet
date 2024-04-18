@@ -13,13 +13,15 @@ license = "MIT"
 python = ">=3.8,<3.11"
 ligo-gracedb = "^2.11"
 gwpy = "^2.1"
+healpy = "^1.16"
+pandas = "^2.0"
 
 ml4gw = {path = "../../../ml4gw", develop = true}
-"mlpe.architectures" = {path = "../../../../PE/libs/architectures", develop = true}
-"mlpe.injection" = {path = "../../../../PE/libs/injection", develop = true}
 "aframe.logging" = {path = "../../../libs/logging", develop = true}
 "aframe.architectures" = {path = "../../../libs/architectures", develop = true, extras=["wrapper"]}
 "aframe.analysis" = {path = "../../../libs/analysis", develop = true}
+"mlpe.architectures" = {path = "../../../../PE/libs/architectures", develop = true}
+"mlpe.injection" = {path = "../../../../PE/libs/injection", develop = true}
 
 [[tool.poetry.source]]
 name = "torch"

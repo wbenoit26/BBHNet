@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, List, Optional
 
-import lal
 import numpy as np
 import torch
 from online_deployment.buffer import DataBuffer
@@ -11,10 +10,8 @@ from online_deployment.dataloading import data_iterator
 from online_deployment.snapshot_whitener import SnapshotWhitener
 from online_deployment.trigger import Searcher, Trigger
 from online_deployment.parameter_estimation import (
-    cast_samples_as_bilby_result,
-    get_data_for_pe,
-    plot_mollview,
-    submit_pe,
+    run_amplfi,
+    set_up_amplfi,
 )
 
 from aframe.architectures import architecturize
@@ -27,6 +24,7 @@ from ml4gw.transforms import SpectralDensity, Whiten
 def main(
     architecture: Callable,
     outdir: Path,
+    weights_path: Path,
     datadir: Path,
     ifos: List[str],
     channel: str,
@@ -65,7 +63,6 @@ def main(
     )
 
     # instantiate network and load in its optimized parameters
-    weights_path = outdir / "training" / "weights.pt"
     logging.info(f"Build network and loading weights from {weights_path}")
 
     # Aframe setup
@@ -87,7 +84,7 @@ def main(
     aframe.load_state_dict(weights)
     aframe.eval()
 
-    # Amplfi setup
+    # Amplfi setup. Hard code most of it for now
     spectral_density = SpectralDensity(
         sample_rate=sample_rate,
         fftlength=fftlength,
@@ -98,7 +95,7 @@ def main(
         sample_rate=sample_rate,
         highpass=highpass
     ).to("cuda")
-    amplfi = None
+    amplfi, std_scaler = set_up_amplfi()
 
     # set up some objects to use for finding
     # and submitting triggers
@@ -117,8 +114,7 @@ def main(
 
     def get_trigger(event):
         fars_hz = [i / 3600 / 24 for i in fars]
-        # trial factor
-        idx = np.digitize(event.far / 2, fars_hz)
+        idx = np.digitize(event.far, fars_hz)
         if idx == 0 and not in_spec:
             logging.warning(
                 "Not submitting event {} to production trigger "
@@ -170,28 +166,23 @@ def main(
                     integrated[-1], t0 - 1, len(integrated) - 1
                 )
                 trigger = get_trigger(event)
-                trigger.submit(event, ifos, datadir, ifo_suffix)
+                response = trigger.submit(event, ifos, datadir, ifo_suffix)
+                logging.info(response.json().keys())
                 searcher.detecting = False
                 last_event_written = False
                 last_event_trigger = trigger
                 last_event_time = event.gpstime
-                psd_data, pe_data = get_data_for_pe(last_event_time, buffer.input_buffer, fduration)
-                pe_psd = spectral_density(psd_data)
-                whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
-                res = amplfi.sample(20000, context=whitened_pe_data)
-                res_s190513bm = cast_samples_as_bilby_result(
-                    res[...,:3].numpy(), ['chirp_mass', 'mass_ratio', 'luminosity_distance'],
-                    "S190513bm HLV result"
+                bilby_res, mollview_plot = run_amplfi(
+                    last_event_time, 
+                    buffer.input_buffer, 
+                    fduration,
+                    spectral_density,
+                    pe_whitener,
+                    amplfi,
+                    std_scaler
                 )
-                mollview_plot = plot_mollview(
-                    torch.remainder(
-                        lal.GreenwichMeanSiderealTime(last_event_time) + descaled_samples[...,7],
-                        torch.as_tensor(2*torch.pi)
-                    ) - torch.pi + vis_shift,
-                    descaled_samples[...,5] + torch.pi/2,
-                    title="HL Model"
-                )
-                submit_pe(pe_outputs)
+                graceid = response.json()["graceid"]
+                trigger.submit_pe(bilby_res, mollview_plot, graceid)
 
             # check if this is because the frame stream stopped
             # being analysis ready, or if it's because frames
@@ -240,15 +231,21 @@ def main(
 
         if event is not None:
             trigger = get_trigger(event)
-            trigger.submit(event, ifos, datadir, ifo_suffix)
+            response = trigger.submit(event, ifos, datadir, ifo_suffix)
             last_event_written = False
             last_event_trigger = trigger
             last_event_time = event.gpstime
-            psd_data, pe_data = get_data_for_pe(last_event_time, buffer.input_buffer, fduration)
-            pe_psd = spectral_density(psd_data)
-            whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
-            pe_outputs = amplfi(whitened_pe_data)
-            submit_pe(pe_outputs)
+            bilby_res, mollview_plot = run_amplfi(
+                last_event_time, 
+                buffer.input_buffer, 
+                fduration,
+                spectral_density,
+                pe_whitener,
+                amplfi,
+                std_scaler
+            )
+            graceid = response.json()["graceid"]
+            trigger.submit_pe(bilby_res, mollview_plot, graceid)
 
         if (
             not last_event_written

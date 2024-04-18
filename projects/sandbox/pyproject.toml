@@ -282,22 +282,23 @@ log_file = "${base.basedir}/log/2D_param_hist.log"
 verbose = "${base.verbose}"
 
 [tool.typeo.scripts.online-deployment]
-outdir = "${base.basedir}"
+outdir = "/home/william.benoit/aframe/methods-paper-main-run"
+weights_path = "/home/william.benoit/aframe/methods-paper-main-run/training/weights.pt"
 datadir = "/dev/shm/kafka"
 ifos = "${base.ifos}"
-channel = "GDS-CALIB_STRAIN"
+channel = "GDS-CALIB_STRAIN_INJ1_O3Replay"
 sample_rate = "${base.sample_rate}"
 kernel_length = "${base.kernel_length}"
 inference_sampling_rate = 512
-psd_length = "${base.inference_psd_length}"
+psd_length = 8 #"${base.inference_psd_length}"
 trigger_distance = "${base.trigger_distance}"
 fduration = "${base.fduration}"
 integration_window_length = "${base.integration_window_length}"
 highpass = "${base.highpass}"
-far_per_day = 0.5
-secondary_far_threshold = 12
+far_per_day = 1
+secondary_far_threshold = 24
 server = "playground"
-#ifo_suffix = "O3ReplayMDC"
+ifo_suffix = "O3ReplayMDC"
 verbose = false
 
 commands.resnet = "${base.resnet}"

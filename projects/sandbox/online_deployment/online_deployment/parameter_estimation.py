@@ -2,6 +2,13 @@ import numpy as np
 import healpy as hp
 import bilby
 import pandas as pd
+import torch
+import lal
+import matplotlib.pyplot as plt
+
+from ml4gw.transforms import scaler
+from mlpe.architectures import MaskedAutoRegressiveFlow, ResNet
+from mlpe.injection import nonspin_bbh_chirp_mass_q_parameter_sampler
 
 def get_data_for_pe(
     event_time,
@@ -23,8 +30,34 @@ def get_data_for_pe(
 
     return psd_data, pe_data
 
-def submit_pe():
-    raise NotImplementedError
+def run_amplfi(
+    last_event_time, 
+    input_buffer, 
+    fduration,
+    spectral_density,
+    pe_whitener,
+    amplfi,
+    std_scaler,
+):
+    psd_data, pe_data = get_data_for_pe(last_event_time, input_buffer, fduration)
+    pe_psd = spectral_density(psd_data)
+    whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
+    res = amplfi.sample(20000, context=whitened_pe_data)
+    descaled_samples = std_scaler(res.mT, reverse=True).mT.cpu()
+    bilby_res = cast_samples_as_bilby_result(
+        descaled_samples[...,:3].numpy(), ['chirp_mass', 'mass_ratio', 'luminosity_distance'],
+        f"{last_event_time} result"
+    )
+    mollview_plot = plot_mollview(
+        torch.remainder(
+            lal.GreenwichMeanSiderealTime(last_event_time) + descaled_samples[...,7],
+            torch.as_tensor(2 * torch.pi)
+        ) - torch.pi,
+        descaled_samples[...,5] + torch.pi / 2,
+        title=f"{last_event_time} sky map"
+    )
+    return bilby_res, mollview_plot
+
 
 def cast_samples_as_bilby_result(
     samples,
@@ -67,5 +100,55 @@ def plot_mollview(
     m = np.zeros(NPIX)
     m[np.in1d(range(NPIX), uniq)] = counts
 
-    fig = hp.mollview(m, fig=fig, title=title, hold=True)
+    fig = plt.figure()
+    hp.mollview(m, fig=fig, title=title, hold=True)
     return fig
+
+def set_up_amplfi():
+    resnet_context_dim = 20
+    resnet_layers = [4, 4, 4]
+    resnet_norm_groups = 8
+    inference_params = [
+        "chirp_mass",
+        "mass_ratio",
+        "luminosity_distance",
+        "phase",
+        "theta_jn",
+        "dec",
+        "psi",
+        "phi",
+    ]
+    num_transforms = 80
+    num_blocks = 5
+    hidden_features = 120
+    embedding = ResNet(
+        (2, 8192),
+        context_dim=resnet_context_dim,
+        layers=resnet_layers,
+        norm_groups=resnet_norm_groups,
+    )
+
+    prior_func = nonspin_bbh_chirp_mass_q_parameter_sampler
+
+    flow_obj = MaskedAutoRegressiveFlow(
+        (8, 2, 8192),
+        embedding,
+        None,
+        None,
+        inference_params,
+        prior_func,
+        num_transforms=num_transforms,
+        num_blocks=num_blocks,
+        hidden_features=hidden_features
+    ).to("cuda")
+
+    weights = torch.load("/home/william.benoit/amplfi_models/amplfi-2-det.ckpt")["state_dict"]
+    flow_obj.load_state_dict(weights)
+    flow_obj.eval()
+
+    std_scaler = scaler.ChannelWiseScaler(8).to("cuda")
+    scaler_ckpt = torch.load('/home/william.benoit/amplfi_models/standard-scaler.pth')
+    std_scaler.load_state_dict(scaler_ckpt)
+    std_scaler.eval()
+
+    return flow_obj, std_scaler

@@ -118,7 +118,6 @@ class Searcher:
         timestamp = t0 + idx / self.inference_sampling_rate
         far = max(self.background.far(value), self.min_far)
         far /= SECONDS_PER_YEAR
-        far *= 2 # trials factor
 
         logging.info(
             "Event coalescence time found to be {:0.3f} "
@@ -173,6 +172,9 @@ class Searcher:
 @dataclass
 class LocalGdb:
     def createEvent(self, filename: str, **_):
+        return filename
+    
+    def writeLog(self, filename: str, **_):
         return filename
 
 
@@ -234,3 +236,13 @@ class Trigger:
             f.write(latency)
 
         return response
+
+    def submit_pe(self, bilby_result, mollview_plot, graceid):
+
+        corner_fname = self.write_dir / "corner_plot.png"
+        bilby_result.plot_corner(filename=corner_fname)
+        self.gdb.writeLog(graceid, "Corner plot", filename=corner_fname)
+
+        mollview_fname = self.write_dir / "mollview_plot.png"
+        mollview_plot.savefig(mollview_fname, dpi=300)
+        self.gdb.writeLog(graceid, "Mollview projection", filename=mollview_fname)

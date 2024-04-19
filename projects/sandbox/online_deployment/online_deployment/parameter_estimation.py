@@ -20,7 +20,7 @@ def get_data_for_pe(
 
     window_start = event_time - buffer_start - event_position - fduration / 2
     window_start = int(sample_rate * window_start)
-    window_end = int(window_start + (pe_window + fduration / 2) * sample_rate)
+    window_end = int(window_start + (pe_window + fduration) * sample_rate)
 
     psd_data = data[:, :window_start]
     pe_data = data[:, window_start:window_end]
@@ -42,6 +42,7 @@ def run_amplfi(
     )
     pe_psd = spectral_density(psd_data)
     whitened_pe_data = pe_whitener(pe_data[None], pe_psd[None])
+    whitened_pe_data = torch.squeeze(whitened_pe_data)
     res = amplfi.sample(20000, context=whitened_pe_data)
     descaled_samples = std_scaler(res.mT, reverse=True).mT.cpu()
     bilby_res = cast_samples_as_bilby_result(

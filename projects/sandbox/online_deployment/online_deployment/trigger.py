@@ -241,10 +241,15 @@ class Trigger:
 
         corner_fname = self.write_dir / "corner_plot.png"
         bilby_result.plot_corner(filename=corner_fname)
-        self.gdb.writeLog(graceid, "Corner plot", filename=corner_fname)
+        self.gdb.writeLog(
+            graceid, "Corner plot", filename=corner_fname, tag_name="pe"
+        )
 
         mollview_fname = self.write_dir / "mollview_plot.png"
         mollview_plot.savefig(mollview_fname, dpi=300)
         self.gdb.writeLog(
-            graceid, "Mollview projection", filename=mollview_fname
+            graceid,
+            "Mollview projection",
+            filename=mollview_fname,
+            tag_name="sky_loc",
         )

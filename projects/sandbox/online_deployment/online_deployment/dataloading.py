@@ -189,7 +189,7 @@ def data_iterator(
                 )
                 x = x[:, slc]
                 frame_buffer = frame_buffer[:, 16384:]
-                yield torch.Tensor(x), t0 - 1, last_ready
+                yield torch.Tensor(x).double(), t0 - 1, last_ready
 
             last_ready = ready
             t0 += length

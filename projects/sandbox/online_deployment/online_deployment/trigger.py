@@ -253,3 +253,5 @@ class Trigger:
             filename=mollview_fname,
             tag_name="sky_loc",
         )
+
+        self.gdb.writeLog(graceid, "O3 Replay")

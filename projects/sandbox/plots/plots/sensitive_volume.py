@@ -5,10 +5,7 @@ from typing import Optional
 import h5py
 import numpy as np
 from astropy.cosmology import Planck15 as cosmology
-from bokeh.io import export_svg, save
-from bokeh.layouts import gridplot
 from plots import compute, utils
-from plots.gwtc3 import catalog_results
 from plots.vetoes import VetoParser, get_catalog_vetoes
 from typeo import scriptify
 
@@ -128,16 +125,36 @@ def main(
     v0 /= 10**9
 
     Tb = background.Tb / utils.SECONDS_PER_MONTH
-    max_events = int(max_far * Tb)
+    # max_events = int(max_far * Tb)
+    max_events = 10
     x = np.arange(1, max_events + 1) / Tb
     thresholds = np.sort(background.detection_statistic)[-max_events:][::-1]
 
-    mass_combos = [(35, 35), (35, 20), (20, 20), (20, 10)]
+    # mass_combos = [(35, 35), (35, 20), (20, 20), (20, 10)]
+    mass_combos = [
+        (10, 10),
+        (15, 15),
+        (20, 20),
+        (25, 25),
+        (30, 30),
+        (35, 35),
+        (40, 40),
+        (45, 45),
+        (50, 50),
+        (55, 55),
+        (60, 60),
+        (65, 65),
+        (70, 70),
+    ]
 
-    weights = np.zeros((4, len(source_probs)))
+    weights = np.zeros((len(mass_combos), len(source_probs)))
     for i, combo in enumerate(mass_combos):
         logging.info(f"Computing likelihoods under {combo} log normal")
-        prior, _ = log_normal_masses(*combo, sigma=sigma, cosmology=cosmology)
+        sigma1 = sigma / np.sqrt(combo[0])
+        sigma2 = sigma / np.sqrt(combo[1])
+        prior, _ = log_normal_masses(
+            *combo, sigma1=sigma1, sigma2=sigma2, cosmology=cosmology
+        )
         prob = get_prob(prior, foreground)
         rejected_prob = get_prob(prior, rejected_params)
 
@@ -154,7 +171,7 @@ def main(
     y *= v0
     err *= v0
 
-    with h5py.File(output_dir / "sensitive-volume.h5", "w") as f:
+    with h5py.File(output_dir / "sensitive-volume-equal-masses.h5", "w") as f:
         f.create_dataset("thresholds", data=thresholds)
         f.create_dataset("fars", data=x)
         for i, combo in enumerate(mass_combos):
@@ -162,59 +179,59 @@ def main(
             g.create_dataset("sv", data=y[i])
             g.create_dataset("err", data=err[i])
 
-    plots = utils.make_grid(mass_combos)
-    for i, (p, color) in enumerate(zip(plots, utils.palette)):
-        p.line(x, y[i], line_width=1.5, line_color=color)
-        utils.plot_err_bands(
-            p,
-            x,
-            y[i],
-            err[i],
-            line_color=color,
-            line_width=0.8,
-            fill_color=color,
-            fill_alpha=0.4,
-        )
+    # plots = utils.make_grid(mass_combos)
+    # for i, (p, color) in enumerate(zip(plots, utils.palette)):
+    #     p.line(x, y[i], line_width=1.5, line_color=color)
+    #     utils.plot_err_bands(
+    #         p,
+    #         x,
+    #         y[i],
+    #         err[i],
+    #         line_color=color,
+    #         line_width=0.8,
+    #         fill_color=color,
+    #         fill_alpha=0.4,
+    #     )
 
-        for pipeline, data in catalog_results.items():
-            # convert VT to volume by dividing out years
-            vt = data["vt"][mass_combos[i]]
-            v = vt * 365 / data["Tb"]
+    #     for pipeline, data in catalog_results.items():
+    #         # convert VT to volume by dividing out years
+    #         vt = data["vt"][mass_combos[i]]
+    #         v = vt * 365 / data["Tb"]
 
-            # only include a legend on the top left
-            kwargs = {}
-            if i == 0:
-                kwargs["legend_label"] = pipeline
-            p.line(
-                [x[0], x[-1]],
-                [v, v],
-                line_color="#333333",
-                line_dash=data["dash"],
-                line_alpha=0.7,
-                line_width=2,
-                **kwargs,
-            )
+    #         # only include a legend on the top left
+    #         kwargs = {}
+    #         if i == 0:
+    #             kwargs["legend_label"] = pipeline
+    #         p.line(
+    #             [x[0], x[-1]],
+    #             [v, v],
+    #             line_color="#333333",
+    #             line_dash=data["dash"],
+    #             line_alpha=0.7,
+    #             line_width=2,
+    #             **kwargs,
+    #         )
 
-            # style the legend on the top left plot
-            if i == 0:
-                # style legend position
-                p.legend.location = "top_left"
-                p.legend.margin = 4
-                p.legend.padding = 2
+    #         # style the legend on the top left plot
+    #         if i == 0:
+    #             # style legend position
+    #             p.legend.location = "top_left"
+    #             p.legend.margin = 4
+    #             p.legend.padding = 2
 
-                # style individual glyphs
-                p.legend.glyph_height = 6
-                p.legend.label_text_font_size = "8pt"
-                p.legend.label_height = 8
+    #             # style individual glyphs
+    #             p.legend.glyph_height = 6
+    #             p.legend.label_text_font_size = "8pt"
+    #             p.legend.label_height = 8
 
-                # style title
-                p.legend.title = "GWTC-3 comparisons"
-                p.legend.title_text_font_size = "9pt"
-                p.legend.title_text_font_style = "bold"
+    #             # style title
+    #             p.legend.title = "GWTC-3 comparisons"
+    #             p.legend.title_text_font_size = "9pt"
+    #             p.legend.title_text_font_style = "bold"
 
-    grid = gridplot(plots, toolbar_location="right", ncols=2)
-    save(grid, filename=output_dir / "sensitive-volume.html")
-    export_svg(grid, filename=output_dir / "sensitive-volume.svg")
+    # grid = gridplot(plots, toolbar_location="right", ncols=2)
+    # save(grid, filename=output_dir / "sensitive-volume.html")
+    # export_svg(grid, filename=output_dir / "sensitive-volume.svg")
 
 
 if __name__ == "__main__":

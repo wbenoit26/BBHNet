@@ -240,7 +240,8 @@ def gaussian_masses(
 def log_normal_masses(
     m1: float,
     m2: float,
-    sigma: float = 2,
+    sigma1: float = 2,
+    sigma2: float = 2,
     cosmology: cosmo.Cosmology = COSMOLOGY,
 ):
     """
@@ -266,8 +267,8 @@ def log_normal_masses(
     """
     prior = PriorDict(conversion_function=mass_constraints)
 
-    prior["mass_1"] = LogNormal(name="mass_1", mu=np.log(m1), sigma=sigma)
-    prior["mass_2"] = LogNormal(name="mass_2", mu=np.log(m2), sigma=sigma)
+    prior["mass_1"] = LogNormal(name="mass_1", mu=np.log(m1), sigma=sigma1)
+    prior["mass_2"] = LogNormal(name="mass_2", mu=np.log(m2), sigma=sigma2)
     prior["mass_ratio"] = Constraint(0.02, 1)
 
     prior["redshift"] = UniformSourceFrame(

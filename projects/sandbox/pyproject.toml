@@ -17,7 +17,7 @@ datadir = "${DATA_DIR}"
 accounting_group_user = "${LIGO_USERNAME}"
 accounting_group = "${LIGO_GROUP}"
 logdir = "${BASE_DIR}/log"
-sample_rate = 2048
+sample_rate = 512
 kernel_length = 1.5
 ifos = ['H1', 'L1']
 hopeless_snr_thresh = 4
@@ -282,8 +282,8 @@ log_file = "${base.basedir}/log/2D_param_hist.log"
 verbose = "${base.verbose}"
 
 [tool.typeo.scripts.online-deployment]
-outdir = "/home/william.benoit/aframe/methods-paper-main-run"
-weights_path = "/home/william.benoit/aframe/methods-paper-main-run/training/weights.pt"
+outdir = "/home/william.benoit/aframe/512_Hz_o3"
+weights_path = "/home/william.benoit/aframe/512_Hz_o3/training/weights.pt"
 datadir = "/dev/shm/kafka"
 ifos = "${base.ifos}"
 channel = "GDS-CALIB_STRAIN_INJ1_O3Replay"

@@ -111,9 +111,9 @@ def plot_mollview(
 
 
 def set_up_amplfi():
-    resnet_context_dim = 20
-    resnet_layers = [4, 4, 4]
-    resnet_norm_groups = 8
+    resnet_context_dim = 8
+    resnet_layers = [3, 4, 4]
+    resnet_norm_groups = 16
     inference_params = [
         "chirp_mass",
         "mass_ratio",
@@ -125,10 +125,10 @@ def set_up_amplfi():
         "phi",
     ]
     num_transforms = 80
-    num_blocks = 5
-    hidden_features = 120
+    num_blocks = 6
+    hidden_features = 150
     embedding = ResNet(
-        (2, 8192),
+        (2, 2048),
         context_dim=resnet_context_dim,
         layers=resnet_layers,
         norm_groups=resnet_norm_groups,
@@ -137,7 +137,7 @@ def set_up_amplfi():
     prior_func = nonspin_bbh_chirp_mass_q_parameter_sampler
 
     flow_obj = MaskedAutoRegressiveFlow(
-        (8, 2, 8192),
+        (8, 2, 2048),
         embedding,
         None,
         None,
@@ -149,7 +149,7 @@ def set_up_amplfi():
     ).to("cuda")
 
     weights = torch.load(
-        "/home/william.benoit/amplfi_models/amplfi-2-det.ckpt"
+        "/home/william.benoit/amplfi_models/amplfi-2-det-wider-mc-tuned.ckpt"
     )["state_dict"]
     flow_obj.load_state_dict(weights)
     flow_obj.eval()

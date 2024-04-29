@@ -132,6 +132,7 @@ def set_up_amplfi():
         context_dim=resnet_context_dim,
         layers=resnet_layers,
         norm_groups=resnet_norm_groups,
+        kernel_size=11,
     )
 
     prior_func = nonspin_bbh_chirp_mass_q_parameter_sampler
@@ -156,7 +157,7 @@ def set_up_amplfi():
 
     std_scaler = scaler.ChannelWiseScaler(8).to("cuda")
     scaler_ckpt = torch.load(
-        "/home/william.benoit/amplfi_models/standard-scaler.pth"
+        "/home/william.benoit/amplfi_models/standard-scaler.wider.pth"
     )
     std_scaler.load_state_dict(scaler_ckpt)
     std_scaler.eval()

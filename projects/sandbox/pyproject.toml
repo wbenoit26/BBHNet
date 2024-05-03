@@ -263,7 +263,7 @@ ifos = "${base.ifos}"
 chunk_size = 4096
 
 # analysis args
-integration_window_length = "${base.integration_window_length}"
+integration_window_length = 0
 cluster_window_length = 8
 fduration = "${base.fduration}"
 psd_length = "${base.inference_psd_length}"
@@ -272,9 +272,9 @@ psd_length = "${base.inference_psd_length}"
 verbose = "${base.verbose}"
 
 [tool.typeo.scripts.sensitive-volume]
-background_file = "${base.basedir}/infer/background.h5"
-foreground_file = "${base.basedir}/infer/foreground.h5"
-rejected_params = "${base.datadir}/test/rejected-parameters.h5"
+background_file = "${base.basedir}/infer/background_0s.h5"
+foreground_file = "${base.basedir}/infer/foreground_0s.h5"
+rejected_params = "${base.datadir}/test/bns-rejected-parameters.h5"
 output_dir = "${base.basedir}/infer/"
 log_file = "${base.basedir}/log/sensitive_volume.log"
 max_far = 1000

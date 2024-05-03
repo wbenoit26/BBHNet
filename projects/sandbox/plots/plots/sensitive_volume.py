@@ -154,7 +154,7 @@ def main(
     y *= v0
     err *= v0
 
-    with h5py.File(output_dir / "sensitive-volume.h5", "w") as f:
+    with h5py.File(output_dir / "sensitive-volume_0s.h5", "w") as f:
         f.create_dataset("thresholds", data=thresholds)
         f.create_dataset("fars", data=x)
         for i, combo in enumerate(mass_combos):
@@ -213,7 +213,7 @@ def main(
                 p.legend.title_text_font_style = "bold"
 
     grid = gridplot(plots, toolbar_location="right", ncols=2)
-    save(grid, filename=output_dir / "sensitive-volume.html")
+    save(grid, filename=output_dir / "sensitive-volume_0s.html")
     export_svg(grid, filename=output_dir / "sensitive-volume.svg")
 
 

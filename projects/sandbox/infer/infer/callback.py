@@ -161,7 +161,8 @@ class Callback:
         return TimeSlideEventSet(events, times, Tb)
 
     def postprocess(self, y):
-        y = self.integrate(y)
+        if self.integration_window_length > 0:
+            y = self.integrate(y)
         return self.cluster(y)
 
     def check_done(self, sequence_id, request_id):

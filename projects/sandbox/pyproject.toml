@@ -274,7 +274,7 @@ verbose = "${base.verbose}"
 [tool.typeo.scripts.sensitive-volume]
 background_file = "${base.basedir}/infer/background_0s.h5"
 foreground_file = "${base.basedir}/infer/foreground_0s.h5"
-rejected_params = "${base.datadir}/test/bns-rejected-parameters.h5"
+rejected_params = "${base.datadir}/test/rejected-parameters.h5"
 output_dir = "${base.basedir}/infer/"
 log_file = "${base.basedir}/log/sensitive_volume.log"
 max_far = 1000

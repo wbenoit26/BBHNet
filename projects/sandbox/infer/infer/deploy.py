@@ -34,8 +34,8 @@ def aggregate_results(output_directory: Path):
         background.append(bckground)
         foreground.append(frground)
 
-    background.write(output_directory / "background_0s.h5")
-    foreground.write(output_directory / "foreground_0s.h5")
+    background.write(output_directory / "background.h5")
+    foreground.write(output_directory / "foreground.h5")
     shutil.rmtree(output_directory / "tmp")
 
 
@@ -60,7 +60,7 @@ def get_ip_address() -> str:
     Currently not a general function.
     """
     nets = psutil.net_if_addrs()
-    return nets["eno8303"][0].address
+    return nets["enp1s0f0"][0].address
 
 
 @scriptify

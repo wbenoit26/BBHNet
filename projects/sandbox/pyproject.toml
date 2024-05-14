@@ -23,9 +23,9 @@ ifos = ['H1', 'L1']
 hopeless_snr_thresh = 4
 global_seed = 42
 
-train_start = 1366934418
-train_stop = 1385424018
-test_stop = 1390780818
+train_start = 1396796418
+train_stop = 1396896418
+test_stop = 1399209861
 
 channel = "GDS-CALIB_STRAIN"
 frame_type = "HOFT_CLEAN_SUB60HZ_C01" # corresponds to open data channel
@@ -178,7 +178,7 @@ commands.resnet = "${base.resnet}"
 # paths
 repository_directory = "${base.repository_directory}" 
 logdir = "${base.logdir}"
-weights = "${base.basedir}/training/weights.pt"
+weights = "/home/william.benoit/aframe/o4b_bbh_model/training/weights.pt"
 
 # input-output mapping info
 num_ifos = 2 
@@ -226,7 +226,7 @@ prior = "${base.testing_prior}"
 minimum_frequency = "${base.minimum_frequency}"
 reference_frequency = "${base.reference_frequency}"
 highpass = "${base.highpass}"
-spacing = 48
+spacing = 16
 buffer = 16
 snr_threshold = "${base.hopeless_snr_thresh}" 
 waveform_duration = "${base.waveform_duration}"
@@ -263,7 +263,7 @@ ifos = "${base.ifos}"
 chunk_size = 4096
 
 # analysis args
-integration_window_length = 0
+integration_window_length = "${base.integration_window_length}"
 cluster_window_length = 8
 fduration = "${base.fduration}"
 psd_length = "${base.inference_psd_length}"
@@ -272,8 +272,8 @@ psd_length = "${base.inference_psd_length}"
 verbose = "${base.verbose}"
 
 [tool.typeo.scripts.sensitive-volume]
-background_file = "${base.basedir}/infer/background_0s.h5"
-foreground_file = "${base.basedir}/infer/foreground_0s.h5"
+background_file = "${base.basedir}/infer/background.h5"
+foreground_file = "${base.basedir}/infer/foreground.h5"
 rejected_params = "${base.datadir}/test/rejected-parameters.h5"
 output_dir = "${base.basedir}/infer/"
 log_file = "${base.basedir}/log/sensitive_volume.log"
